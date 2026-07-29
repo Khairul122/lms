@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
-import 'package:lms/core/services/fcm_service.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 
 class DiskusiKelasScreen extends StatefulWidget {
   final String classCode;
@@ -20,7 +18,6 @@ class DiskusiKelasScreen extends StatefulWidget {
 
 class _DiskusiKelasScreenState extends State<DiskusiKelasScreen> {
   final TextEditingController _messageController = TextEditingController();
-  String _userName = 'Siswa';
   int _currentUserId = 0;
   List<dynamic> _messages = [];
   bool _isChatLoading = true;
@@ -29,18 +26,12 @@ class _DiskusiKelasScreenState extends State<DiskusiKelasScreen> {
   void initState() {
     super.initState();
     _loadLocalUserData();
-    _subscribeToTopic();
     _fetchDiscussions();
-  }
-
-  void _subscribeToTopic() async {
-    await FirebaseMessaging.instance.subscribeToTopic('chat_${widget.classCode}');
   }
 
   Future<void> _loadLocalUserData() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _userName = prefs.getString("name") ?? 'Siswa';
       _currentUserId = prefs.getInt("user_id") ?? 0;
     });
   }
@@ -69,7 +60,6 @@ class _DiskusiKelasScreenState extends State<DiskusiKelasScreen> {
     if (_messageController.text.trim().isEmpty) return;
 
     final String message = _messageController.text.trim();
-    final String senderName = _userName;
     _messageController.clear();
 
     try {
@@ -79,15 +69,9 @@ class _DiskusiKelasScreenState extends State<DiskusiKelasScreen> {
       };
 
       final response = await ApiService.post("/discussions", bodyPayload);
-      
+
       if (response != null && response['success'] == true) {
         _fetchDiscussions();
-        await FCMService.sendChatNotification(
-          classCode: widget.classCode,
-          className: widget.className,
-          senderName: senderName,
-          message: message,
-        );
       }
     } catch (e) {
       if (mounted) {

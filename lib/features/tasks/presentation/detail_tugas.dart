@@ -1,9 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:lms/core/services/fcm_service.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lms/services/api_service.dart';
 
 class DetailTugasScreen extends StatefulWidget {
   final String title;
@@ -31,9 +33,14 @@ class DetailTugasScreen extends StatefulWidget {
 
 class _DetailTugasScreenState extends State<DetailTugasScreen> {
   final List<Map<String, dynamic>> _uploadedFiles = [];
+  final TextEditingController _noteController = TextEditingController();
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
+  bool _isSubmitting = false;
   bool _isSubmitted = false;
+  String? _existingFilePath;
+  String? _score;
+  String? _teacherNote;
 
   @override
   void initState() {
@@ -41,111 +48,100 @@ class _DetailTugasScreenState extends State<DetailTugasScreen> {
     _checkSubmissionStatus();
   }
 
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
   Future<void> _checkSubmissionStatus() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null || widget.taskId == null) return;
+    if (widget.taskId == null) return;
 
     setState(() => _isLoading = true);
 
     try {
-      final doc = await FirebaseFirestore.instance
-          .collection('submissions')
-          .doc('${user.uid}_${widget.taskId}')
-          .get();
+      final response = await ApiService.get('/submissions');
+      if (response is Map && response['success'] == true) {
+        final List<dynamic> allSubs = response['data'] is List ? response['data'] : [];
+        final match = allSubs.firstWhere(
+          (sub) => sub is Map && sub['task_id'].toString() == widget.taskId.toString(),
+          orElse: () => null,
+        );
 
-      if (doc.exists) {
-        setState(() {
-          _isSubmitted = true;
-          final data = doc.data() as Map<String, dynamic>;
-          if (data['files'] != null) {
-            _uploadedFiles.clear();
-            _uploadedFiles.addAll(List<Map<String, dynamic>>.from(data['files']));
-          }
-        });
+        if (match != null) {
+          setState(() {
+            _isSubmitted = true;
+            _existingFilePath = match['file_path']?.toString();
+            _score = match['score']?.toString();
+            _teacherNote = match['teacher_note']?.toString();
+            if (match['note'] != null) {
+              _noteController.text = match['note'].toString();
+            }
+          });
+        }
       }
     } catch (e) {
       debugPrint('Error checking submission status: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   Future<void> _submitTask() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null || widget.taskId == null) return;
+    if (widget.taskId == null) return;
 
-    setState(() => _isLoading = true);
+    setState(() => _isSubmitting = true);
 
     try {
-      // --- AMBIL NAMA SISWA TERLEBIH DAHULU ---
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      final studentName = userDoc.data()?['nama'] ?? 'Siswa';
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      final token = prefs.getString('token');
 
-      await FirebaseFirestore.instance
-          .collection('submissions')
-          .doc('${user.uid}_${widget.taskId}')
-          .set({
-        'student_id': user.uid,
-        'student_name': studentName, // 🔥 SIMPAN NAMA DISINI
-        'task_id': widget.taskId,
-        'files': _uploadedFiles,
-        'submitted_at': FieldValue.serverTimestamp(),
-        'status': 'submitted',
-      });
+      final uri = Uri.parse('${ApiService.baseUrl}/submissions');
+      final request = http.MultipartRequest('POST', uri);
 
-      // --- KIRIM NOTIFIKASI KE GURU ---
-      try {
-        final taskDoc = await FirebaseFirestore.instance.collection('tasks').doc(widget.taskId).get();
-        final taskData = taskDoc.data();
-        final classId = taskData?['class_id'];
-        final taskTitle = taskData?['title'];
-
-        if (classId != null) {
-          debugPrint('🔍 Mencari Guru untuk Class ID: $classId');
-          // 2. Cari data kelas untuk mendapatkan teacher_id
-          // Coba cari berdasarkan class_code
-          var classSnapshot = await FirebaseFirestore.instance
-              .collection('classes')
-              .where('class_code', isEqualTo: classId)
-              .get();
-          
-          String? teacherId;
-          
-          if (classSnapshot.docs.isNotEmpty) {
-            teacherId = classSnapshot.docs.first.data()['teacher_id'];
-            debugPrint('✅ Guru ditemukan via class_code: $teacherId');
-          } else {
-            // Jika tidak ketemu, coba cari berdasarkan Document ID
-            try {
-              var classDoc = await FirebaseFirestore.instance.collection('classes').doc(classId).get();
-              if (classDoc.exists) {
-                teacherId = classDoc.data()?['teacher_id'];
-                debugPrint('✅ Guru ditemukan via Doc ID: $teacherId');
-              }
-            } catch (e) {
-              debugPrint('⚠️ Gagal mencari via Doc ID: $e');
-            }
-          }
-
-          if (teacherId != null) {
-            await _sendNotification(teacherId, user, taskTitle, classId);
-          } else {
-            debugPrint('❌ Guru TIDAK ditemukan. Notifikasi tidak dikirim.');
-          }
-        }
-      } catch (notifError) {
-        debugPrint('Gagal mengirim notifikasi ke guru: $notifError');
+      request.headers['Accept'] = 'application/json';
+      if (token != null && token.isNotEmpty) {
+        request.headers['Authorization'] = 'Bearer $token';
       }
-      // ---------------------------------
 
-      setState(() {
-        _isSubmitted = true;
-      });
+      request.fields['task_id'] = widget.taskId!;
+      request.fields['note'] = _noteController.text.trim();
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Tugas berhasil dikirim!'), backgroundColor: Colors.green),
-        );
+      if (_uploadedFiles.isNotEmpty && _uploadedFiles.first['path'] != null) {
+        final path = _uploadedFiles.first['path'] as String;
+        request.files.add(await http.MultipartFile.fromPath('file', path));
+      }
+
+      final streamedResponse = await request.send();
+      final responseBody = await streamedResponse.stream.bytesToString();
+
+      dynamic decoded;
+      try {
+        decoded = jsonDecode(responseBody);
+      } catch (_) {
+        decoded = null;
+      }
+
+      final bool success = streamedResponse.statusCode >= 200 &&
+          streamedResponse.statusCode < 300 &&
+          (decoded is Map ? decoded['success'] != false : true);
+
+      if (success) {
+        setState(() => _isSubmitted = true);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tugas berhasil dikirim!'), backgroundColor: Colors.green),
+          );
+        }
+        await _checkSubmissionStatus();
+      } else {
+        final message = (decoded is Map ? decoded['message'] : null) ?? 'Gagal mengirim tugas (${streamedResponse.statusCode})';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message.toString()), backgroundColor: Colors.red),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -154,46 +150,26 @@ class _DetailTugasScreenState extends State<DetailTugasScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() => _isSubmitting = false);
     }
-  }
-
-  Future<void> _sendNotification(String teacherId, User user, String? taskTitle, String classId) async {
-    final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-    final studentName = userDoc.data()?['nama'] ?? user.email ?? 'Siswa';
-
-    await FirebaseFirestore.instance.collection('notifications').add({
-      'receiver_id': teacherId,
-      'email': user.email,
-      'title': 'Tugas Baru Dikirim',
-      'message': '$studentName telah mengumpulkan tugas "$taskTitle" di kelas ${widget.className}',
-      'timestamp': FieldValue.serverTimestamp(),
-      'type': 'submission',
-      'class_id': classId,
-      'student_name': studentName,
-    });
-
-    await FCMService.sendNotificationToTeacher(
-      teacherId: teacherId,
-      studentName: studentName,
-      taskTitle: taskTitle ?? 'Tugas',
-    );
   }
 
   Future<void> _pickFile() async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
+      allowMultiple: false,
       type: FileType.any,
     );
 
-    if (result != null) {
+    if (result != null && result.files.isNotEmpty) {
+      final file = result.files.first;
       setState(() {
-        for (var file in result.files) {
-          _uploadedFiles.add({
+        _uploadedFiles
+          ..clear()
+          ..add({
             'name': file.name,
             'type': file.extension?.toLowerCase() == 'pdf' ? 'pdf' : 'file',
+            'path': file.path,
           });
-        }
       });
     }
   }
@@ -202,10 +178,13 @@ class _DetailTugasScreenState extends State<DetailTugasScreen> {
     final XFile? image = await _picker.pickImage(source: source);
     if (image != null) {
       setState(() {
-        _uploadedFiles.add({
-          'name': image.name,
-          'type': 'image',
-        });
+        _uploadedFiles
+          ..clear()
+          ..add({
+            'name': image.name,
+            'type': 'image',
+            'path': image.path,
+          });
       });
     }
   }
@@ -305,6 +284,12 @@ class _DetailTugasScreenState extends State<DetailTugasScreen> {
         title: const Text('EduSmart', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF42A5F5),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: _checkSubmissionStatus,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: RepaintBoundary(
@@ -359,52 +344,51 @@ class _DetailTugasScreenState extends State<DetailTugasScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              
+
               // 🔥 TAMPILAN NILAI (JIKA ADA)
-              StreamBuilder<DocumentSnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('submissions')
-                    .doc('${FirebaseAuth.instance.currentUser?.uid}_${widget.taskId}')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasData && snapshot.data!.exists) {
-                    final data = snapshot.data!.data() as Map<String, dynamic>;
-                    if (data.containsKey('grade')) {
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.amber[100],
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.amber, width: 2),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.star, color: Colors.amber, size: 30),
-                              const SizedBox(width: 12),
-                              Column(
-                                children: [
-                                  const Text('NILAI ANDA', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.amber)),
-                                  Text(
-                                    data['grade'] ?? '0',
-                                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(width: 12),
-                              const Icon(Icons.star, color: Colors.amber, size: 30),
-                            ],
-                          ),
+              if (_score != null && _score != 'null')
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.amber[100],
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.amber, width: 2),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.star, color: Colors.amber, size: 30),
+                            const SizedBox(width: 12),
+                            Column(
+                              children: [
+                                const Text('NILAI ANDA', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.amber)),
+                                Text(
+                                  _score ?? '0',
+                                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(width: 12),
+                            const Icon(Icons.star, color: Colors.amber, size: 30),
+                          ],
                         ),
-                      );
-                    }
-                  }
-                  return const SizedBox.shrink();
-                },
-              ),
+                        if (_teacherNote != null && _teacherNote!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 12),
+                          Text(
+                            'Catatan Guru: $_teacherNote',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(fontSize: 13, color: Colors.black87),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -424,39 +408,67 @@ class _DetailTugasScreenState extends State<DetailTugasScreen> {
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-                        child: _uploadedFiles.isEmpty 
-                          ? Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 30),
-                              child: Column(
-                                children: [
-                                  const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 48),
-                                  const SizedBox(height: 12),
-                                  const Text('Belum Mengirim Tugas', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-                                ],
+                        child: _uploadedFiles.isEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 30),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      _isSubmitted ? Icons.check_circle_outline : Icons.warning_amber_rounded,
+                                      color: _isSubmitted ? Colors.green : Colors.red,
+                                      size: 48,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _isSubmitted
+                                          ? (_existingFilePath ?? 'Tugas sudah dikumpulkan')
+                                          : 'Belum Mengirim Tugas',
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _uploadedFiles.length,
+                                itemBuilder: (context, index) {
+                                  final file = _uploadedFiles[index];
+                                  return ListTile(
+                                    leading: Icon(
+                                      file['type'] == 'pdf'
+                                          ? Icons.picture_as_pdf
+                                          : file['type'] == 'image'
+                                              ? Icons.image
+                                              : Icons.insert_drive_file,
+                                      color: const Color(0xFF42A5F5),
+                                    ),
+                                    title: Text(file['name'] ?? 'File'),
+                                    trailing: _isSubmitted
+                                        ? null
+                                        : IconButton(
+                                            icon: const Icon(Icons.delete, color: Colors.red),
+                                            onPressed: () => setState(() => _uploadedFiles.removeAt(index)),
+                                          ),
+                                  );
+                                },
                               ),
-                            )
-                          : ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _uploadedFiles.length,
-                              itemBuilder: (context, index) {
-                                final file = _uploadedFiles[index];
-                                return ListTile(
-                                  leading: Icon(
-                                    file['type'] == 'pdf' ? Icons.picture_as_pdf : 
-                                    file['type'] == 'image' ? Icons.image : Icons.insert_drive_file,
-                                    color: const Color(0xFF42A5F5),
-                                  ),
-                                  title: Text(file['name'] ?? 'File'),
-                                  trailing: _isSubmitted ? null : IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.red),
-                                    onPressed: () => setState(() => _uploadedFiles.removeAt(index)),
-                                  ),
-                                );
-                              },
-                            ),
                       ),
                       if (!_isSubmitted) ...[
+                        const SizedBox(height: 16),
+                        Container(
+                          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12)),
+                          child: TextField(
+                            controller: _noteController,
+                            maxLines: 3,
+                            decoration: const InputDecoration(
+                              hintText: 'Catatan untuk guru (opsional)',
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.all(16),
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
@@ -484,14 +496,16 @@ class _DetailTugasScreenState extends State<DetailTugasScreen> {
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: _uploadedFiles.isEmpty ? null : _submitTask,
+                      onPressed: (_uploadedFiles.isEmpty || _isSubmitting) ? null : _submitTask,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF42A5F5),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                         elevation: 3,
                       ),
-                      child: const Text('KIRIM TUGAS', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      child: _isSubmitting
+                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('KIRIM TUGAS', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),

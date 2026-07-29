@@ -7,7 +7,6 @@ import 'package:lms/features/profile/presentation/profil.dart';
 import 'package:lms/features/notifications/presentation/notifikasi.dart';
 import 'package:lms/features/classroom/presentation/detail_kelas.dart';
 import 'package:lms/features/classroom/presentation/carikelas.dart';
-import 'package:lms/core/services/notification_service.dart';
 import 'dart:convert';
 
 class homepage extends StatefulWidget {
@@ -27,7 +26,6 @@ class _homepageState extends State<homepage> {
   void initState() {
     super.initState();
     _loadInitialData();
-    NotificationService.syncTopics();
   }
 
   Future<void> _loadInitialData() async {

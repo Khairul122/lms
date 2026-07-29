@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lms/services/api_service.dart';
 import 'package:lms/features/auth/presentation/atur_ulang_sandi.dart';
 
 class LupaSandiScreen extends StatefulWidget {
@@ -34,21 +34,22 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      if (mounted) {
-        _showSuccessDialog();
-      }
-    } on FirebaseAuthException catch (e) {
-      String message = "Gagal mengirim email reset.";
-      if (e.code == 'user-not-found') {
-        message = "Email tidak terdaftar di sistem.";
-      } else if (e.code == 'invalid-email') {
-        message = "Format email tidak valid.";
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
-        );
+      final response = await ApiService.post("/forgot-password", {
+        "email": email,
+      });
+
+      if (response is Map && response["success"] == true) {
+        if (mounted) {
+          _showSuccessDialog(email);
+        }
+      } else {
+        final message = (response is Map ? response["message"] : null) ??
+            "Gagal mengirim email reset.";
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message.toString()), backgroundColor: Colors.red),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -61,7 +62,7 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
     }
   }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog(String email) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -84,7 +85,7 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
               Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const AturUlangSandiScreen()),
+                MaterialPageRoute(builder: (context) => AturUlangSandiScreen(email: email)),
               );
             },
             child: const Text(
@@ -184,7 +185,7 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
               ),
             ),
           ),
-          
+
           Positioned(
             top: 50,
             left: 20,

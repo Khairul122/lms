@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
-import 'package:lms/features/auth/presentation/login.dart';
-import 'package:lms/core/services/notification_service.dart';
 import 'package:lms/features/onboarding/presentation/homepage.dart';
 
 class DaftarScreen extends StatefulWidget {
@@ -135,48 +131,8 @@ class _DaftarScreenState extends State<DaftarScreen> {
                   const SizedBox(height: 15),
                   _buildTextField(_phoneController, 'Nomor Handphone', keyboardType: TextInputType.phone),
                   
-                  const SizedBox(height: 30),
-                  
-                  // Separator
-                  Row(
-                    children: [
-                      Expanded(child: Container(height: 1, color: Colors.black12)),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 15),
-                        child: Text('ATAU', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
-                      ),
-                      Expanded(child: Container(height: 1, color: Colors.black12)),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 30),
-
-                  // Google Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: OutlinedButton(
-                      onPressed: _isLoading ? null : _signInWithGoogle,
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                        side: BorderSide(color: Colors.grey.shade200),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.g_mobiledata, color: Colors.red, size: 40),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Daftar dengan Google',
-                            style: TextStyle(color: Colors.black.withValues(alpha: 0.6), fontSize: 16, fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  
                   const SizedBox(height: 40),
-                  
+
                   // Register Button
                   SizedBox(
                     width: double.infinity,
@@ -299,6 +255,8 @@ class _DaftarScreenState extends State<DaftarScreen> {
     );
   }
 
+  String? _lastRegisterError;
+
   /// 🔥 PROSES SINKRONISASI AKUN BARU KE BACKEND LARAVEL
   Future<bool> _syncNewUserToLaravel(String name, String email, String password) async {
     try {
@@ -326,6 +284,7 @@ class _DaftarScreenState extends State<DaftarScreen> {
         await prefs.reload();
         return true;
       }
+      _lastRegisterError = response is Map ? response['message']?.toString() : null;
       return false;
     } catch (e) {
       debugPrint("Gagal melempar data registrasi ke Laravel: $e");
@@ -351,18 +310,9 @@ class _DaftarScreenState extends State<DaftarScreen> {
 
     setState(() => _isLoading = true);
     try {
-      // 1. Daftarkan kredensial akun ke Firebase Auth
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      // 2. Sinkronisasikan data profil lengkap ke MySQL Server Laravel
       bool syncSuccess = await _syncNewUserToLaravel(name, email, password);
 
       if (syncSuccess) {
-        await NotificationService.syncTopics();
-
         if (mounted) {
           showDialog(
             context: context,
@@ -382,54 +332,10 @@ class _DaftarScreenState extends State<DaftarScreen> {
           );
         }
       } else {
-        throw Exception("Gagal mendaftarkan data profil Anda ke MySQL Server.");
+        throw Exception(_lastRegisterError ?? "Gagal mendaftarkan data profil Anda ke MySQL Server.");
       }
-    } on FirebaseAuthException catch (e) {
-      String message = 'Pendaftaran gagal';
-      if (e.code == 'email-already-in-use') message = 'Email sudah digunakan';
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        bool syncSuccess = await _syncNewUserToLaravel(
-          user.displayName ?? 'Siswa Google', 
-          user.email ?? '', 
-          'google_authenticated_secure_123'
-        );
-
-        if (syncSuccess) {
-          await NotificationService.syncTopics();
-          if (mounted) {
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const homepage()));
-          }
-        } else {
-          await FirebaseAuth.instance.signOut();
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Akun Google gagal disinkronkan ke LMS')));
-        }
-      }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal masuk dengan Google: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

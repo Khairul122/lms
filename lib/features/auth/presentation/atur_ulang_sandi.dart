@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lms/services/api_service.dart';
 import 'package:lms/features/auth/presentation/login.dart';
 
 class AturUlangSandiScreen extends StatefulWidget {
-  const AturUlangSandiScreen({super.key});
+  final String email;
+
+  const AturUlangSandiScreen({super.key, required this.email});
 
   @override
   State<AturUlangSandiScreen> createState() => _AturUlangSandiScreenState();
@@ -47,30 +49,28 @@ class _AturUlangSandiScreenState extends State<AturUlangSandiScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.confirmPasswordReset(
-        code: code,
-        newPassword: newPassword,
-      );
+      final response = await ApiService.post("/reset-password", {
+        "email": widget.email,
+        "token": code,
+        "password": newPassword,
+      });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kata sandi berhasil diubah! Silakan login.'), backgroundColor: Colors.green),
-        );
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const LoginScreen()),
-          (route) => false,
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      String message = "Gagal mengubah sandi.";
-      if (e.code == 'expired-action-code') {
-        message = "Kode sudah kadaluarsa. Silakan minta link baru.";
-      } else if (e.code == 'invalid-action-code') {
-        message = "Kode tidak valid. Periksa kembali kode di email Anda.";
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
+      if (response is Map && response["success"] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Kata sandi berhasil diubah! Silakan login.'), backgroundColor: Colors.green),
+          );
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const LoginScreen()),
+            (route) => false,
+          );
+        }
+      } else {
+        final message = (response is Map ? response["message"] : null) ?? "Gagal mengubah sandi.";
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString()), backgroundColor: Colors.red));
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -125,20 +125,20 @@ class _AturUlangSandiScreenState extends State<AturUlangSandiScreen> {
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                   const SizedBox(height: 15),
-                  const Text(
-                    'Lengkapi data di bawah ini untuk mengubah kata sandi Anda',
+                  Text(
+                    'Masukkan token dari email yang dikirim ke ${widget.email} beserta kata sandi baru Anda',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                    style: const TextStyle(color: Colors.grey, fontSize: 14),
                   ),
                   const SizedBox(height: 50),
 
-                  _buildTextField(_codeController, 'Kode dari Email', icon: Icons.vpn_key_outlined),
+                  _buildTextField(_codeController, 'Token dari Email', icon: Icons.vpn_key_outlined),
                   const SizedBox(height: 20),
-                  
+
                   _buildTextField(
-                    _newPasswordController, 
-                    'Kata Sandi Baru', 
-                    icon: Icons.lock_outline, 
+                    _newPasswordController,
+                    'Kata Sandi Baru',
+                    icon: Icons.lock_outline,
                     isPassword: _obscureText1,
                     suffixIcon: IconButton(
                       icon: Icon(_obscureText1 ? Icons.visibility_off : Icons.visibility, color: Colors.grey, size: 20),
@@ -148,9 +148,9 @@ class _AturUlangSandiScreenState extends State<AturUlangSandiScreen> {
                   const SizedBox(height: 20),
 
                   _buildTextField(
-                    _confirmPasswordController, 
-                    'Konfirmasi Sandi', 
-                    icon: Icons.lock_reset_outlined, 
+                    _confirmPasswordController,
+                    'Konfirmasi Sandi',
+                    icon: Icons.lock_reset_outlined,
                     isPassword: _obscureText2,
                     suffixIcon: IconButton(
                       icon: Icon(_obscureText2 ? Icons.visibility_off : Icons.visibility, color: Colors.grey, size: 20),
@@ -184,7 +184,7 @@ class _AturUlangSandiScreenState extends State<AturUlangSandiScreen> {
               ),
             ),
           ),
-          
+
           Positioned(
             top: 50,
             left: 20,
@@ -198,7 +198,7 @@ class _AturUlangSandiScreenState extends State<AturUlangSandiScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, 
+  Widget _buildTextField(TextEditingController controller, String hint,
       {bool isPassword = false, IconData? icon, Widget? suffixIcon}) {
     return Container(
       decoration: BoxDecoration(

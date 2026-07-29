@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
 import 'package:lms/features/profile/presentation/info_profil.dart';
@@ -208,15 +206,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
                       const SizedBox(height: 15),
                       _buildMenuItem(context, 'Notifikasi', Icons.notifications_none_outlined),
 
-                      const SizedBox(height: 20),
-                      // Tombol Debug Crashlytics
-                      _buildMenuItemCustom(
-                        'Tes Crash (Debug)',
-                        Icons.bug_report,
-                        () => FirebaseCrashlytics.instance.crash(),
-                        Colors.red,
-                      ),
-
                       const SizedBox(height: 40),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -291,21 +280,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
     );
   }
 
-  Widget _buildMenuItemCustom(String title, IconData icon, VoidCallback onTap, Color color) {
-    return Container(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: ListTile(
-        leading: Icon(icon, color: color),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
-        trailing: Icon(Icons.bug_report, size: 16, color: color),
-        onTap: onTap,
-      ),
-    );
-  }
-
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -326,9 +300,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
               }
 
               final prefs = await SharedPreferences.getInstance();
-              await prefs.clear();
-
-              await FirebaseAuth.instance.signOut();
+              await prefs.remove("token");
+              await prefs.remove("user_id");
+              await prefs.remove("name");
+              await prefs.remove("email");
+              await prefs.remove("role");
 
               if (context.mounted) {
                 Navigator.pushAndRemoveUntil(

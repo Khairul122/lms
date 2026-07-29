@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lms/core/theme/app_theme.dart';
-import 'package:lms/services/api_service.dart';
 import 'package:lms/features/onboarding/presentation/onboarding.dart';
 import 'package:lms/features/onboarding/presentation/homepage.dart';
 
@@ -38,44 +36,15 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _initializeApp() async {
     await Future.delayed(const Duration(seconds: 2));
 
-    final firebaseUser = FirebaseAuth.instance.currentUser;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final token = prefs.getString("token");
 
-    if (firebaseUser == null) {
+    if (token != null && token.isNotEmpty) {
+      _navigateTo(const homepage());
+    } else {
       _navigateTo(const OnboardingScreen());
-      return;
     }
-
-    try {
-      final response = await ApiService.post('/firebase-login', {
-        "email": firebaseUser.email,
-      });
-
-      if (response != null && response is Map && response["success"] == true) {
-        final user = response["user"];
-        final token = response["token"];
-        final prefs = await SharedPreferences.getInstance();
-
-        if (token != null) {
-          await prefs.setString("token", token.toString());
-        }
-
-        if (user != null) {
-          await prefs.setInt("user_id", user["id"] ?? 0);
-          await prefs.setString("name", user["name"] ?? "");
-          await prefs.setString("email", user["email"] ?? "");
-          await prefs.setString("role", user["role"] ?? "");
-        }
-
-        await prefs.reload();
-
-        _navigateTo(const homepage());
-        return;
-      }
-    } catch (e) {
-      debugPrint("Gagal auto-sync Laravel startup siswa: $e");
-    }
-
-    _navigateTo(const OnboardingScreen());
   }
 
   void _navigateTo(Widget targetPage) {

@@ -1,9 +1,46 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:lms/services/api_service.dart';
 
-class NotifikasiScreen extends StatelessWidget {
+class NotifikasiScreen extends StatefulWidget {
   const NotifikasiScreen({super.key});
+
+  @override
+  State<NotifikasiScreen> createState() => _NotifikasiScreenState();
+}
+
+class _NotifikasiScreenState extends State<NotifikasiScreen> {
+  List<dynamic> _notifications = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchNotifications();
+  }
+
+  Future<void> _fetchNotifications() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final response = await ApiService.get('/notifications');
+      if (response is Map && response['success'] == true) {
+        setState(() {
+          _notifications = response['data'] is List ? List.from(response['data']) : [];
+        });
+      } else {
+        final message = (response is Map ? response['message'] : null) ?? 'Gagal memuat notifikasi';
+        setState(() => _errorMessage = message.toString());
+      }
+    } catch (e) {
+      setState(() => _errorMessage = 'Gagal memuat notifikasi: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +50,7 @@ class NotifikasiScreen extends StatelessWidget {
         children: [
           // Header
           Container(
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -47,7 +84,7 @@ class NotifikasiScreen extends StatelessWidget {
             ),
           ),
 
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Title with Back Button
           Padding(
@@ -58,18 +95,18 @@ class NotifikasiScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.pop(context);
                   },
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.arrow_back,
                     color: Colors.black,
                     size: 28,
                   ),
                   padding: EdgeInsets.zero,
-                  constraints: BoxConstraints(),
+                  constraints: const BoxConstraints(),
                 ),
-                Expanded(
+                const Expanded(
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.only(right: 28),
+                      padding: EdgeInsets.only(right: 28),
                       child: Text(
                         'Notifikasi',
                         style: TextStyle(
@@ -81,109 +118,64 @@ class NotifikasiScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+                IconButton(
+                  onPressed: _isLoading ? null : _fetchNotifications,
+                  icon: const Icon(Icons.refresh, color: Colors.black, size: 26),
+                ),
               ],
             ),
           ),
 
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
 
           // Content - List of Notifications
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              // Stream pertama: Ambil daftar kelas yang diikuti siswa
-              stream: FirebaseFirestore.instance
-                  .collection('classes')
-                  .where('students', arrayContains: FirebaseAuth.instance.currentUser?.uid)
-                  .snapshots(),
-              builder: (context, classSnapshot) {
-                if (classSnapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 30),
+                          child: Text(_errorMessage!, textAlign: TextAlign.center),
+                        ),
+                      )
+                    : _notifications.isEmpty
+                        ? const Center(child: Text('Belum ada notifikasi.'))
+                        : RefreshIndicator(
+                            onRefresh: _fetchNotifications,
+                            child: ListView.separated(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              itemCount: _notifications.length,
+                              separatorBuilder: (context, index) => const SizedBox(height: 15),
+                              itemBuilder: (context, index) {
+                                final data = _notifications[index] as Map<String, dynamic>;
 
-                if (!classSnapshot.hasData || classSnapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text('Kamu belum bergabung dengan kelas apapun.'),
-                  );
-                }
+                                // Menentukan icon berdasarkan tipe notifikasi
+                                IconData icon;
+                                Color iconColor;
+                                if (data['type'] == 'task') {
+                                  icon = Icons.assignment;
+                                  iconColor = Colors.orange;
+                                } else if (data['type'] == 'material') {
+                                  icon = Icons.book;
+                                  iconColor = Colors.blue;
+                                } else if (data['type'] == 'grade') {
+                                  icon = Icons.star; // Ikon bintang untuk nilai
+                                  iconColor = Colors.amber;
+                                } else {
+                                  icon = Icons.notifications;
+                                  iconColor = Colors.green;
+                                }
 
-                // Ambil semua class_code dari kelas yang diikuti
-                final joinedClassCodes = classSnapshot.data!.docs
-                    .map((doc) => doc['class_code'] as String)
-                    .toList();
-
-                // Stream kedua: Ambil notifikasi dari Firestore
-                return StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection('notifications')
-                      .orderBy('timestamp', descending: true)
-                      .snapshots(),
-                  builder: (context, notifSnapshot) {
-                    if (notifSnapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-
-                    if (!notifSnapshot.hasData || notifSnapshot.data!.docs.isEmpty) {
-                      return const Center(
-                        child: Text('Belum ada notifikasi.'),
-                      );
-                    }
-
-                    // Filter notifikasi: 
-                    // Tampilkan jika class_id ada di kelas yang diikuti ATAU receiver_id adalah ID Siswa ini
-                    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-                    final notifications = notifSnapshot.data!.docs.where((doc) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final classId = data['class_id'] as String?;
-                      final receiverId = data['receiver_id'] as String?;
-                      
-                      bool isFromJoinedClass = classId != null && joinedClassCodes.contains(classId);
-                      bool isForMe = receiverId != null && receiverId == currentUserId;
-                      
-                      return isFromJoinedClass || isForMe;
-                    }).toList();
-
-                    if (notifications.isEmpty) {
-                      return const Center(
-                        child: Text('Belum ada notifikasi.'),
-                      );
-                    }
-
-                    return ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: notifications.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 15),
-                      itemBuilder: (context, index) {
-                        final data = notifications[index].data() as Map<String, dynamic>;
-                        
-                        // Menentukan icon berdasarkan tipe notifikasi
-                        IconData icon;
-                        Color iconColor;
-                        if (data['type'] == 'task') {
-                          icon = Icons.assignment;
-                          iconColor = Colors.orange;
-                        } else if (data['type'] == 'material') {
-                          icon = Icons.book;
-                          iconColor = Colors.blue;
-                        } else if (data['type'] == 'grade') {
-                          icon = Icons.star; // Ikon bintang untuk nilai
-                          iconColor = Colors.amber;
-                        } else {
-                          icon = Icons.notifications;
-                          iconColor = Colors.green;
-                        }
-
-                        return _buildNotificationCard(
-                          icon: icon,
-                          iconColor: iconColor,
-                          title: data['title'] ?? 'Notifikasi',
-                          message: data['message'] ?? '',
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
+                                return _buildNotificationCard(
+                                  icon: icon,
+                                  iconColor: iconColor,
+                                  title: data['title'] ?? 'Notifikasi',
+                                  message: data['message'] ?? '',
+                                );
+                              },
+                            ),
+                          ),
           ),
         ],
       ),
@@ -197,7 +189,7 @@ class NotifikasiScreen extends StatelessWidget {
     required String message,
   }) {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(15),
@@ -205,7 +197,7 @@ class NotifikasiScreen extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -226,7 +218,7 @@ class NotifikasiScreen extends StatelessWidget {
               size: 24,
             ),
           ),
-          SizedBox(width: 12),
+          const SizedBox(width: 12),
           // Content
           Expanded(
             child: Column(
@@ -235,17 +227,17 @@ class NotifikasiScreen extends StatelessWidget {
                 // Title
                 Text(
                   title,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: Colors.black,
                   ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 // Message
                 Text(
                   message,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 13,
                     color: Colors.black87,
                     height: 1.4,
@@ -259,4 +251,3 @@ class NotifikasiScreen extends StatelessWidget {
     );
   }
 }
-

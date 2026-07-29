@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lms/services/api_service.dart';
 import 'package:lms/features/tasks/presentation/daftar_tugas.dart';
 import 'package:lms/features/materials/presentation/lampiran_materi.dart';
 
@@ -62,35 +62,33 @@ class DetailPertemuan extends StatelessWidget {
 
           // Content
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('meetings')
-                  .where('class_id', isEqualTo: classCode)
-                  .snapshots(),
+            child: FutureBuilder<List<dynamic>>(
+              future: _fetchMeetings(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                final meetings = snapshot.data ?? [];
+                if (meetings.isEmpty) {
                   return const Center(child: Text('Data tidak ditemukan'));
                 }
 
-                // Find the specific meeting based on index
-                final meetings = snapshot.data!.docs.toList();
-                meetings.sort((a, b) {
-                  final timeA = (a.data() as Map<String, dynamic>)['created_at'] as Timestamp?;
-                  final timeB = (b.data() as Map<String, dynamic>)['created_at'] as Timestamp?;
-                  if (timeA == null) return 1;
-                  if (timeB == null) return -1;
-                  return timeA.compareTo(timeB);
-                });
+                // Cari pertemuan sesuai nomor, fallback ke urutan index
+                Map<String, dynamic>? meetingData;
+                for (final m in meetings) {
+                  final data = m as Map<String, dynamic>;
+                  if (data['pertemuan'] != null && int.tryParse(data['pertemuan'].toString()) == pertemuanKe) {
+                    meetingData = data;
+                    break;
+                  }
+                }
+                meetingData ??= (pertemuanKe <= meetings.length) ? meetings[pertemuanKe - 1] as Map<String, dynamic> : null;
 
-                if (pertemuanKe > meetings.length) {
+                if (meetingData == null) {
                   return const Center(child: Text('Pertemuan tidak ditemukan'));
                 }
 
-                final meetingData = meetings[pertemuanKe - 1].data() as Map<String, dynamic>;
                 final meetingName = meetingData['nama_pertemuan'] ?? 'Pertemuan $pertemuanKe';
                 final meetingTopic = meetingData['tema_pertemuan'] ?? '';
 
@@ -182,7 +180,7 @@ class DetailPertemuan extends StatelessWidget {
                             Align(
                               alignment: Alignment.bottomRight,
                               child: Text(
-                                _formatDate(meetingData['created_at'] as Timestamp?),
+                                _formatDate(meetingData['created_at']?.toString()),
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.white70,
@@ -290,13 +288,30 @@ class DetailPertemuan extends StatelessWidget {
     );
   }
 
-  String _formatDate(Timestamp? timestamp) {
-    if (timestamp == null) return '01 Oktober 2025';
-    final date = timestamp.toDate();
+  String _formatDate(String? isoDate) {
+    if (isoDate == null || isoDate.isEmpty) return '01 Oktober 2025';
+    DateTime? date;
+    try {
+      date = DateTime.parse(isoDate);
+    } catch (_) {
+      return '01 Oktober 2025';
+    }
     final months = [
       'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
       'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
     ];
     return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
+  }
+
+  Future<List<dynamic>> _fetchMeetings() async {
+    try {
+      final response = await ApiService.get('/meetings?class_code=$classCode');
+      if (response is Map && response['success'] == true && response['data'] is List) {
+        return List.from(response['data']);
+      }
+    } catch (e) {
+      debugPrint('Gagal memuat pertemuan: $e');
+    }
+    return [];
   }
 }

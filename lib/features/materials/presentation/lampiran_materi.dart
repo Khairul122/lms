@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lms/services/api_service.dart';
 
 class LampiranMateri extends StatelessWidget {
   final String classCode;
@@ -109,18 +109,14 @@ class LampiranMateri extends StatelessWidget {
                   // Label "Pengenalan" (or Dynamic label from material title)
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection('materials')
-                          .where('class_id', isEqualTo: classCode)
-                          .where('pertemuan', isEqualTo: pertemuanKe)
-                          .snapshots(),
+                    child: FutureBuilder<List<dynamic>>(
+                      future: _fetchMaterials(),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const CircularProgressIndicator();
                         }
-                        
-                        final materials = snapshot.data?.docs ?? [];
+
+                        final materials = snapshot.data ?? [];
                         if (materials.isEmpty) {
                           return const Text(
                             'Tidak ada lampiran',
@@ -130,8 +126,8 @@ class LampiranMateri extends StatelessWidget {
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: materials.map((doc) {
-                            final data = doc.data() as Map<String, dynamic>;
+                          children: materials.map((item) {
+                            final data = item as Map<String, dynamic>;
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 32),
                               child: Column(
@@ -216,5 +212,17 @@ class LampiranMateri extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<List<dynamic>> _fetchMaterials() async {
+    try {
+      final response = await ApiService.get('/materials?class_code=$classCode&pertemuan=$pertemuanKe');
+      if (response is Map && response['success'] == true && response['data'] is List) {
+        return List.from(response['data']);
+      }
+    } catch (e) {
+      debugPrint('Gagal memuat materi: $e');
+    }
+    return [];
   }
 }
