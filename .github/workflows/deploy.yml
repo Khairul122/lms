@@ -1,0 +1,67 @@
+name: CI/CD Deploy LMS Backend to Rumahweb Hosting
+
+on:
+  push:
+    branches:
+      - main
+      - production
+  workflow_dispatch:
+
+jobs:
+  web-deploy:
+    name: 🚀 Deploy Backend to Shared Hosting (Rumahweb)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 1. Checkout Repository Code
+        uses: actions/checkout@v4
+
+      - name: 🐘 2. Setup PHP Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, bcmath, curl, zip, pdo, pdo_mysql
+
+      - name: 📦 3. Install Composer Dependencies (No-Dev)
+        run: |
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+      - name: 🗜️ 4. Compress Vendor Directory to vendor.zip
+        run: |
+          zip -r vendor.zip vendor/
+
+      - name: 📤 5. Sync Project via FTP to Server
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT }}
+          server-dir: public_html/backend-lms/
+          exclude: |
+            **/.git**
+            **/.git/**
+            **/.github/**
+            **/node_modules/**
+            **/tests/**
+            **/.env**
+            **/.env.example**
+            **/vendor/**
+            **/storage/logs/*.log**
+            **/README.md**
+            **/CHANGELOG.md**
+            **/phpunit.xml**
+
+      - name: ⚡ 6. Execute Auto-Extract Hook on Server
+        run: |
+          DEPLOY_KEY="${{ secrets.DEPLOY_HOOK_KEY }}"
+          if [ -z "$DEPLOY_KEY" ]; then
+            DEPLOY_KEY="SYN_DEPLOY_SECRET_KEY_2026"
+          fi
+          RESPONSE=$(curl -s "https://backend-lms.synectra.xyz/deploy-hook.php?key=${DEPLOY_KEY}")
+          echo "Server Hook Response: $RESPONSE"
+
+      - name: 🔔 7. Send Telegram Notification on Status
+        if: always()
+        run: |
+          echo "Deployment process completed with status: ${{ job.status }}"
