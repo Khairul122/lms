@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - production
+      - backend
   workflow_dispatch:
 
 jobs:
