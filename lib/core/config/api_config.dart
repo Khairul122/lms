@@ -3,7 +3,7 @@ class ApiConfig {
 
   static String get baseUrl {
     if (customBaseUrl.isNotEmpty) return customBaseUrl;
-    return 'http://192.168.18.125:8000/api';
+    return 'https://xbncmdd6jn.localto.net/api';
   }
 
   static String get rootUrl => baseUrl.replaceAll('/api', '');
@@ -12,5 +12,6 @@ class ApiConfig {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "ngrok-skip-browser-warning": "true",
+        "localtonet-skip-browser-warning": "true",
       };
 }
