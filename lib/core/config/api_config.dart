@@ -3,7 +3,7 @@ class ApiConfig {
 
   static String get baseUrl {
     if (customBaseUrl.isNotEmpty) return customBaseUrl;
-    return 'https://xbncmdd6jn.localto.net/api';
+    return 'https://backend-lms.synectra.xyz/api';
   }
 
   static String get rootUrl => baseUrl.replaceAll('/api', '');
