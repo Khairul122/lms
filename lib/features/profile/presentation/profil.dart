@@ -3,13 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
-import 'package:lms/features/classroom/presentation/dftr_kelas.dart';
-import 'package:lms/features/tasks/presentation/daftar_tugas.dart';
 import 'package:lms/features/profile/presentation/info_profil.dart';
 import 'package:lms/features/auth/presentation/ubah_kata_sandi.dart';
 import 'package:lms/features/notifications/presentation/notifikasi.dart';
 import 'package:lms/features/auth/presentation/login.dart';
-import 'package:lms/features/onboarding/presentation/homepage.dart';
+import 'package:lms/core/widgets/bottom_nav_bar.dart';
+import 'package:lms/app_navigation.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -249,7 +248,10 @@ class _ProfilScreenState extends State<ProfilScreen> {
           );
         },
       ),
-      bottomNavigationBar: _buildBottomNavBar(context),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: 3,
+        onTabSelected: (index) => AppNavigation.goToTab(context, index),
+      ),
     );
   }
 
@@ -343,68 +345,4 @@ class _ProfilScreenState extends State<ProfilScreen> {
     );
   }
 
-  Widget _buildBottomNavBar(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(15),
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF38B0FE),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.home_outlined, color: Colors.white, size: 28),
-            onPressed: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const homepage()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.co_present_outlined, color: Colors.white, size: 28),
-            onPressed: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const DaftarKelasScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.pending_actions_outlined, color: Colors.white, size: 28),
-            onPressed: () => Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const DaftarTugasScreen()),
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.person, color: Color(0xFF38B0FE), size: 24),
-                SizedBox(width: 8),
-                Text(
-                  'Profil',
-                  style: TextStyle(
-                    color: Color(0xFF38B0FE),
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
