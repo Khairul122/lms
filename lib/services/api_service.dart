@@ -7,7 +7,7 @@ class ApiService {
 
   static String get baseUrl {
     if (customBaseUrl.isNotEmpty) return customBaseUrl;
-    return 'http://192.168.18.125:8000/api';
+    return 'https://xbncmdd6jn.localto.net/api';
   }
 
   // Helper jika butuh URL domain saja (tanpa /api)
@@ -24,6 +24,7 @@ class ApiService {
       "Accept": "application/json",
       "Content-Type": "application/json",
       "ngrok-skip-browser-warning": "true",
+      "localtonet-skip-browser-warning": "true",
     };
 
     // Jika token Sanctum tersedia, langsung suntikkan ke header
