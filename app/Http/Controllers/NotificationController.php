@@ -2,17 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Notification\CreateNotificationAction;
+use App\Actions\Notification\DeleteNotificationAction;
+use App\Actions\Notification\UpdateNotificationAction;
 use App\Models\Notification;
 use App\Models\User;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    public function __construct(protected NotificationService $notificationService)
+    {
+    }
+
     public function index()
     {
-        $notifications = Notification::with('user')
-            ->latest()
-            ->paginate(10);
+        $notifications = $this->notificationService->paginateForAdmin();
 
         return view('notifications.index', compact('notifications'));
     }
@@ -24,21 +30,20 @@ class NotificationController extends Controller
         return view('notifications.create', compact('users'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CreateNotificationAction $action)
     {
         $request->validate([
             'user_id' => 'required',
-            'title' => 'required',
+            'title'   => 'required',
             'message' => 'required',
-            'type' => 'required',
+            'type'    => 'required',
         ]);
 
-        Notification::create([
-            'user_id' => $request->user_id,
-            'title' => $request->title,
-            'message' => $request->message,
-            'type' => $request->type,
-            'is_read' => false,
+        $action->execute([
+            'receiver_id' => $request->user_id,
+            'title'       => $request->title,
+            'message'     => $request->message,
+            'type'        => $request->type,
         ]);
 
         return redirect()
@@ -58,14 +63,14 @@ class NotificationController extends Controller
         return view('notifications.edit', compact('notification', 'users'));
     }
 
-    public function update(Request $request, Notification $notification)
+    public function update(Request $request, Notification $notification, UpdateNotificationAction $action)
     {
-        $notification->update([
-            'user_id' => $request->user_id,
-            'title' => $request->title,
-            'message' => $request->message,
-            'type' => $request->type,
-            'is_read' => $request->boolean('is_read'),
+        $action->execute($notification, [
+            'receiver_id' => $request->user_id,
+            'title'       => $request->title,
+            'message'     => $request->message,
+            'type'        => $request->type,
+            'is_read'     => $request->boolean('is_read'),
         ]);
 
         return redirect()
@@ -73,9 +78,9 @@ class NotificationController extends Controller
             ->with('success', 'Notifikasi berhasil diupdate.');
     }
 
-    public function destroy(Notification $notification)
+    public function destroy(Notification $notification, DeleteNotificationAction $action)
     {
-        $notification->delete();
+        $action->execute($notification);
 
         return back()->with('success', 'Notifikasi berhasil dihapus.');
     }

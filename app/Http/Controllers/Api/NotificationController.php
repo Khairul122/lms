@@ -2,94 +2,64 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Notification\CreateNotificationAction;
+use App\Actions\Notification\DeleteNotificationAction;
+use App\Actions\Notification\MarkNotificationReadAction;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\NotificationResource;
 use App\Models\Notification;
+use App\Services\NotificationService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
+    use ApiResponse;
+
+    public function __construct(protected NotificationService $notificationService)
+    {
+    }
+
     public function index()
     {
-        $notifications = Notification::with(['receiver','classroom'])
-            ->latest()
-            ->get()
-            ->map(function ($item) {
+        $notifications = $this->notificationService->listAll();
 
-                return [
-                    'id' => $item->id,
-                    'receiver' => optional($item->receiver)->name,
-                    'class' => optional($item->classroom)->class_name,
-                    'title' => $item->title,
-                    'message' => $item->message,
-                    'type' => $item->type,
-                    'is_read' => $item->is_read,
-                    'created_at' => $item->created_at,
-                ];
-            });
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Data notifikasi berhasil diambil.',
-            'data' => $notifications,
-        ]);
+        return $this->success(NotificationResource::collection($notifications), 'Data notifikasi berhasil diambil.');
     }
 
     public function show(Notification $notification)
     {
-        $notification->load(['receiver','classroom']);
+        $notification->load(['receiver', 'classroom']);
 
-        return response()->json([
-            'success' => true,
-            'data' => $notification,
-        ]);
+        return $this->success($notification);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CreateNotificationAction $action)
     {
         $request->validate([
             'receiver_id' => 'required|exists:users,id',
-            'class_id' => 'nullable|exists:class_rooms,id',
-            'title' => 'required|string|max:255',
-            'message' => 'required|string',
-            'type' => 'required|string',
+            'class_id'    => 'nullable|exists:class_rooms,id',
+            'title'       => 'required|string|max:255',
+            'message'     => 'required|string',
+            'type'        => 'required|string',
         ]);
 
-        $notification = Notification::create([
-            'receiver_id' => $request->receiver_id,
-            'class_id' => $request->class_id,
-            'title' => $request->title,
-            'message' => $request->message,
-            'type' => $request->type,
-            'is_read' => false,
-        ]);
+        $notification = $action->execute($request->all());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notifikasi berhasil dibuat.',
-            'data' => $notification,
-        ], 201);
+        return $this->created($notification, 'Notifikasi berhasil dibuat.');
     }
 
-    public function update(Request $request, Notification $notification)
+    public function update(Notification $notification, MarkNotificationReadAction $action)
     {
-        $notification->update([
-            'is_read' => true,
-        ]);
+        $notification = $action->execute($notification);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notifikasi ditandai sudah dibaca.',
-            'data' => $notification,
-        ]);
+        return $this->success($notification, 'Notifikasi ditandai sudah dibaca.');
     }
 
-    public function destroy(Notification $notification)
+    public function destroy(Notification $notification, DeleteNotificationAction $action)
     {
-        $notification->delete();
+        $action->execute($notification);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notifikasi berhasil dihapus.',
-        ]);
+        return $this->success(null, 'Notifikasi berhasil dihapus.');
     }
 }
