@@ -66,7 +66,7 @@ class _KomentarScreenState extends State<KomentarScreen> {
             message: _commentController.text.trim(),
             isFromUser: true,
             initial: 'E',
-            avatarColor: Color(0xFF42A5F5),
+            avatarColor: const Color(0xFF42A5F5),
           ),
         );
       });
@@ -78,12 +78,14 @@ class _KomentarScreenState extends State<KomentarScreen> {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
             _scrollController.position.maxScrollExtent,
-            duration: Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeOut,
           );
         }
       });
+    } else {
       AppDialog.showError(context, 'Komentar tidak boleh kosong!');
+    }
   }
 
   @override
