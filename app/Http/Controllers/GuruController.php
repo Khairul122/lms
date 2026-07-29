@@ -2,18 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\User\CreateUserAction;
+use App\Actions\User\DeleteUserAction;
+use App\Actions\User\UpdateUserAction;
 use App\Models\User;
+use App\Services\UserService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class GuruController extends Controller
 {
+    public function __construct(protected UserService $userService)
+    {
+    }
+
     public function index()
     {
-        $gurus = User::where('role', 'guru')
-            ->latest()
-            ->paginate(10);
+        $gurus = $this->userService->paginateByKeyword(null, 'guru');
 
         return view('guru.index', compact('gurus'));
     }
@@ -23,7 +28,7 @@ class GuruController extends Controller
         return view('guru.create');
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CreateUserAction $action)
     {
         $request->validate([
             'name'       => 'required|max:150',
@@ -38,27 +43,23 @@ class GuruController extends Controller
         ]);
 
         $photo = null;
-
         if ($request->hasFile('photo')) {
             $photo = $request->file('photo')->store('guru', 'public');
         }
 
-        $guru = User::create([
-            'name'       => $request->name,
-            'username'   => $request->username,
-            'email'      => $request->email,
-            'password'   => Hash::make($request->password),
-            'role'       => 'guru',
-            'nip'        => $request->nip,
-            'phone'      => $request->phone,
-            'gender'     => $request->gender,
-            'birth_date' => $request->birth_date,
-            'photo'      => $photo,
+        $action->execute([
+            'name'               => $request->name,
+            'username'           => $request->username,
+            'email'              => $request->email,
+            'password'           => $request->password,
+            'role'               => 'guru',
+            'nip'                => $request->nip,
+            'phone'              => $request->phone,
+            'gender'             => $request->gender,
+            'birth_date'         => $request->birth_date,
+            'photo'              => $photo,
+            'assign_spatie_role' => true,
         ]);
-
-        if (method_exists($guru, 'assignRole')) {
-            $guru->assignRole('guru');
-        }
 
         return redirect()
             ->route('guru.index')
@@ -75,7 +76,7 @@ class GuruController extends Controller
         return view('guru.edit', compact('guru'));
     }
 
-    public function update(Request $request, User $guru)
+    public function update(Request $request, User $guru, UpdateUserAction $action)
     {
         $request->validate([
             'name'     => 'required|max:150',
@@ -84,42 +85,34 @@ class GuruController extends Controller
             'nip'      => 'required',
         ]);
 
+        $photo = null;
         if ($request->hasFile('photo')) {
-
             if ($guru->photo) {
                 Storage::disk('public')->delete($guru->photo);
             }
-
-            $guru->photo = $request->file('photo')
-                ->store('guru', 'public');
+            $photo = $request->file('photo')->store('guru', 'public');
         }
 
-        $guru->name       = $request->name;
-        $guru->username   = $request->username;
-        $guru->email      = $request->email;
-        $guru->nip        = $request->nip;
-        $guru->phone      = $request->phone;
-        $guru->gender     = $request->gender;
-        $guru->birth_date = $request->birth_date;
-
-        if ($request->filled('password')) {
-            $guru->password = Hash::make($request->password);
-        }
-
-        $guru->save();
+        $action->execute($guru, [
+            'name'       => $request->name,
+            'username'   => $request->username,
+            'email'      => $request->email,
+            'nip'        => $request->nip,
+            'phone'      => $request->phone,
+            'gender'     => $request->gender,
+            'birth_date' => $request->birth_date,
+            'photo'      => $photo,
+            'password'   => $request->password,
+        ]);
 
         return redirect()
             ->route('guru.index')
             ->with('success', 'Data guru berhasil diupdate.');
     }
 
-    public function destroy(User $guru)
+    public function destroy(User $guru, DeleteUserAction $action)
     {
-        if ($guru->photo) {
-            Storage::disk('public')->delete($guru->photo);
-        }
-
-        $guru->delete();
+        $action->execute($guru);
 
         return back()->with('success', 'Guru berhasil dihapus.');
     }

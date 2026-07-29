@@ -11,7 +11,6 @@ use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\SubmissionController;
 use App\Http\Controllers\Api\DiscussionController;
 use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\FirebaseLoginController;
 
 /*
