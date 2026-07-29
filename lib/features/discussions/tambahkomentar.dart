@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:guru/fcm_service.dart';
+import 'package:guru/core/services/fcm_service.dart';
 import 'package:guru/repositories/auth_repository.dart';
 import 'package:guru/repositories/discussion_repository.dart';
 

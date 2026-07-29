@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:guru/repositories/task_repository.dart';
-import 'package:guru/fcm_service.dart';
+import 'package:guru/core/services/fcm_service.dart';
 
 class TambahTugasDinamis extends StatefulWidget {
   final String classCode;
