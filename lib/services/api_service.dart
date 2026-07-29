@@ -24,6 +24,7 @@ class ApiService {
       "Accept": "application/json",
       "Content-Type": "application/json",
       "ngrok-skip-browser-warning": "true",
+      "localtonet-skip-warning": "true",
     };
 
     if (token != null && token.isNotEmpty) {
@@ -112,10 +113,12 @@ class ApiService {
     dynamic json;
     try {
       json = jsonDecode(response.body);
-    } catch (_) {
+    } catch (e) {
+      print("❌ GAGAL PARSE JSON (${response.statusCode}):");
+      print(response.body);
       return {
         'success': false,
-        'message': 'Terjadi kesalahan internal server (${response.statusCode}).'
+        'message': 'Respon server bukan JSON valid (${response.statusCode}).'
       };
     }
 

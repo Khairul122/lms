@@ -36,19 +36,32 @@ class _DaftarMuridState extends State<DaftarMurid> {
       }
 
       if (targetClass != null) {
+        final classId = int.tryParse(targetClass['id'].toString());
+        Map<String, dynamic> fullDetail = targetClass;
+        
+        if (classId != null) {
+          final detailRes = await _classRepository.getClass(classId);
+          if (detailRes.isNotEmpty) {
+            fullDetail = detailRes;
+          }
+        }
+
         if (mounted) {
           setState(() {
-            _classDetail = targetClass;
+            _classDetail = fullDetail;
             
-            // Menggunakan struktur IF-ELSE biasa untuk menghindari ambigitas syntax parser Dart
-            if (_classDetail != null && _classDetail!['teacher'] != null) {
-              _teacherName = _classDetail!['teacher']['name'] ?? 'Guru';
+            // Penanganan teacher secara aman baik berupa String maupun Map/Object
+            final teacherVal = fullDetail['teacher_detail'] ?? fullDetail['teacher'];
+            if (teacherVal is Map) {
+              _teacherName = (teacherVal['name'] ?? 'Guru').toString();
+            } else if (teacherVal != null) {
+              _teacherName = teacherVal.toString();
             } else {
               _teacherName = 'Guru';
             }
 
-            if (_classDetail != null && _classDetail!['students'] is List) {
-              _students = _classDetail!['students'];
+            if (fullDetail['students'] is List) {
+              _students = List<dynamic>.from(fullDetail['students']);
             } else {
               _students = [];
             }
