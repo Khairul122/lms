@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
-import 'package:guru/features/onboarding/presentation/halamanutama.dart';
 import 'package:guru/features/auth/presentation/login.dart';
-import 'package:guru/config/api_config.dart'; // 🔥 Import ApiConfig
+import 'package:guru/services/api_service.dart';
 
 class Daftar extends StatefulWidget {
   const Daftar({super.key});
@@ -153,52 +147,8 @@ class _DaftarState extends State<Daftar> {
                   const SizedBox(height: 15),
                   _buildTextField(_alamatController, 'Alamat', maxLines: 3),
                   
-                  const SizedBox(height: 30),
-                  
-                  // Separator
-                  Row(
-                    children: [
-                      Expanded(child: Container(height: 1, color: Colors.black26)),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 15),
-                        child: Text('ATAU', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
-                      ),
-                      Expanded(child: Container(height: 1, color: Colors.black26)),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 30),
-
-                  // Google Sign-In Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: OutlinedButton(
-                      onPressed: _isLoading ? null : _signInWithGoogle,
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                        side: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.g_mobiledata, color: Colors.red, size: 40),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Daftar dengan Google',
-                            style: TextStyle(
-                              color: Colors.black.withOpacity(0.7),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  
                   const SizedBox(height: 40),
-                  
+
                   // Register Button
                   SizedBox(
                     width: double.infinity,
@@ -341,34 +291,25 @@ class _DaftarState extends State<Daftar> {
 
     setState(() => _isLoading = true);
     try {
-      await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      final response = await ApiService.post("/register", {
+        "name": name,
+        "username": username,
+        "email": email,
+        "password": password,
+        "password_confirmation": confirmPassword,
+        "role": "guru",
+        "nip": _nipController.text.trim(),
+        "phone": "",
+        "ttl": "${_tempatLahirController.text.trim()}, ${_tanggalLahirController.text.trim()}",
+        "jenis_kelamin": _jenisKelamin,
+        "mata_pelajaran": _mapelController.text.trim(),
+        "sekolah_asal": _sekolahController.text.trim(),
+        "alamat": _alamatController.text.trim(),
+      });
 
-      // 🔥 Request Register ke Backend menggunakan ApiConfig
-      final response = await http.post(
-        Uri.parse("${ApiConfig.baseUrl}/register"),
-        headers: ApiConfig.headers,
-        body: jsonEncode({
-          "name": name,
-          "email": email,
-          "password": password,
-          "role": "guru",
-          "nip": _nipController.text.trim(),
-          "phone": "",
-          "ttl": "${_tempatLahirController.text.trim()}, ${_tanggalLahirController.text.trim()}",
-          "jenis_kelamin": _jenisKelamin,
-          "mata_pelajaran": _mapelController.text.trim(),
-          "sekolah_asal": _sekolahController.text.trim(),
-          "alamat": _alamatController.text.trim(),
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception(data["message"] ?? "Terjadi kesalahan saat pendaftaran");
+      if (response is! Map || response["success"] != true) {
+        final message = (response is Map ? response["message"] : null) ?? "Terjadi kesalahan saat pendaftaran";
+        throw Exception(message);
       }
 
       if (mounted) {
@@ -389,59 +330,8 @@ class _DaftarState extends State<Daftar> {
           ),
         );
       }
-    } on FirebaseAuthException catch (e) {
-      String message = 'Pendaftaran gagal';
-      if (e.code == 'email-already-in-use') message = 'Email sudah digunakan';
-      if (e.code == 'weak-password') message = 'Kata sandi terlalu lemah';
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        final userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-        if (!userDoc.exists) {
-          await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-            'nama': user.displayName ?? '',
-            'username': user.email?.split('@')[0] ?? '',
-            'email': user.email ?? '',
-            'role': 'guru',
-            'created_at': FieldValue.serverTimestamp(),
-            'telepon': '',
-            'nik': '',
-            'alamat': '',
-            'tempat_lahir': '',
-            'tanggal_lahir': '',
-            'jenis_kelamin': 'Laki-laki',
-            'mata_pelajaran': '',
-            'sekolah_asal': '',
-          });
-        }
-        if (mounted) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const HalamanUtama()));
-        }
-      }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Koneksi bermasalah atau gagal: $e')));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

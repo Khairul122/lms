@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:guru/services/api_service.dart';
-import 'package:guru/core/services/fcm_service.dart';
 import 'package:guru/features/tasks/presentation/berhasil_beri_nilai.dart';
 
 class KasihPeniliaian {
@@ -91,15 +90,6 @@ class KasihPeniliaian {
                             );
 
                             if (res != null && res['success'] == true) {
-                              // 2. Kirim Notifikasi FCM (Failsafe)
-                              try {
-                                await FCMService.sendNotificationToStudent(
-                                  studentId: studentId,
-                                  taskTitle: taskTitle,
-                                  grade: grade,
-                                );
-                              } catch (_) {}
-
                               if (dialogContext.mounted) {
                                 Navigator.of(dialogContext).pop();
                                 BerhasilBeriNilai.show(context);

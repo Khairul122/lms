@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:guru/features/classroom/data/meeting_repository.dart';
 import 'package:guru/features/tasks/presentation/daftar_tugas_penilaian.dart';
 
 class DaftarPertemuanPenilaian extends StatefulWidget {
@@ -17,16 +17,13 @@ class DaftarPertemuanPenilaian extends StatefulWidget {
 }
 
 class _DaftarPertemuanPenilaianState extends State<DaftarPertemuanPenilaian> {
-
-  late Stream<QuerySnapshot> _meetingsStream;
+  final MeetingRepository _meetingRepository = MeetingRepository();
+  late Future<List<dynamic>> _meetingsFuture;
 
   @override
   void initState() {
     super.initState();
-    _meetingsStream = FirebaseFirestore.instance
-        .collection('meetings')
-        .where('class_id', isEqualTo: widget.classCode)
-        .snapshots();
+    _meetingsFuture = _meetingRepository.getMeetings(classCode: widget.classCode);
   }
 
   @override
@@ -105,38 +102,37 @@ class _DaftarPertemuanPenilaianState extends State<DaftarPertemuanPenilaian> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
-                  StreamBuilder<QuerySnapshot>(
-                    stream: _meetingsStream,
+
+                  FutureBuilder<List<dynamic>>(
+                    future: _meetingsFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const Center(child: CircularProgressIndicator());
                       }
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      if (snapshot.hasError) {
+                        return Center(child: Text(snapshot.error.toString()));
+                      }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Center(child: Text('Belum ada pertemuan ditambahkan.'));
                       }
 
-                      final meetings = snapshot.data!.docs.toList();
-                      meetings.sort((a, b) {
-                        final dataA = a.data() as Map<String, dynamic>;
-                        final dataB = b.data() as Map<String, dynamic>;
-                        final timeA = dataA['created_at'] as Timestamp?;
-                        final timeB = dataB['created_at'] as Timestamp?;
-                        if (timeA == null && timeB == null) return 0;
-                        if (timeA == null) return 1;
-                        if (timeB == null) return -1;
-                        return timeA.compareTo(timeB);
-                      });
+                      final meetings = snapshot.data!
+                          .where((meeting) => meeting['class_code'] == widget.classCode)
+                          .toList();
+
+                      if (meetings.isEmpty) {
+                        return const Center(child: Text('Belum ada pertemuan ditambahkan.'));
+                      }
 
                       return ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: meetings.length,
                         itemBuilder: (context, index) {
-                          final data = meetings[index].data() as Map<String, dynamic>;
+                          final data = meetings[index] as Map<String, dynamic>;
                           final pertemuanKe = index + 1;
-                          final meetingId = meetings[index].id;
-                          
+                          final meetingId = data['id'].toString();
+
                           return GestureDetector(
                             onTap: () {
                               Navigator.push(
@@ -160,7 +156,7 @@ class _DaftarPertemuanPenilaianState extends State<DaftarPertemuanPenilaian> {
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   ),

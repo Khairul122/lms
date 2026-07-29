@@ -13,22 +13,10 @@ dependencies:
 
   cupertino_icons: ^1.0.8
   intl: ^0.19.0
-  flutter_local_notifications: ^17.2.2
 
-  # 🔥 Firebase
-  firebase_core: ^3.1.0
-  firebase_auth: ^5.1.0
-  cloud_firestore: ^5.0.0
-  firebase_messaging: ^15.0.0
-  firebase_storage: ^12.1.0
-  firebase_crashlytics: ^4.0.0
-  firebase_analytics: ^11.3.0 # 🔥 Tambah Analytics
-  google_sign_in: ^6.2.1
-  
   url_launcher: ^6.3.0
   http: ^1.2.0
   shared_preferences: ^2.3.2
-  googleapis_auth: ^1.6.0
   file_picker: ^8.1.4
   image_picker: ^1.1.2
 

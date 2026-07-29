@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:guru/features/auth/presentation/aturulangpassword.dart';
+import 'package:guru/services/api_service.dart';
 
 class LupaPassword extends StatefulWidget {
   const LupaPassword({super.key});
@@ -31,36 +31,42 @@ class _LupaPasswordState extends State<LupaPassword> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      if (mounted) {
-        _showSuccessDialog();
+      final response = await ApiService.post("/forgot-password", {
+        "email": email,
+      });
+
+      if (response is Map && response["success"] == true) {
+        if (mounted) {
+          _showSuccessDialog(email);
+        }
+      } else {
+        final message = (response is Map ? response["message"] : null) ?? "Gagal mengirim email reset.";
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString()), backgroundColor: Colors.red));
+        }
       }
-    } on FirebaseAuthException catch (e) {
-      String message = "Gagal mengirim email reset.";
-      if (e.code == 'user-not-found') {
-        message = "Email tidak terdaftar.";
-      }
+    } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog(String email) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Email Terkirim!'),
-        content: const Text('Silakan periksa email Anda untuk mendapatkan kode reset kata sandi.'),
+        content: const Text('Silakan periksa email Anda untuk mendapatkan link reset kata sandi.'),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const AturUlangPassword()));
+              Navigator.push(context, MaterialPageRoute(builder: (context) => AturUlangPassword(email: email)));
             },
             child: const Text('LANJUTKAN KE PENGATURAN SANDI', style: TextStyle(color: Color(0xFF1A237E), fontWeight: FontWeight.bold, fontSize: 12)),
           ),

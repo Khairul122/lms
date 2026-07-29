@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:guru/services/api_service.dart';
 
 class UbahSandi extends StatefulWidget {
   const UbahSandi({super.key});
@@ -41,33 +41,21 @@ class _UbahSandiState extends State<UbahSandi> {
     setState(() => _isLoading = true);
 
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception("User tidak ditemukan");
+      final response = await ApiService.post("/change-password", {
+        "current_password": sandiLama,
+        "new_password": sandiBaru,
+      });
 
-      // 🔥 STEP 1: Re-autentikasi (Cek apakah sandi lama benar)
-      final AuthCredential credential = EmailAuthProvider.credential(
-        email: user.email!,
-        password: sandiLama,
-      );
-
-      await user.reauthenticateWithCredential(credential);
-
-      // 🔥 STEP 2: Update sandi baru
-      await user.updatePassword(sandiBaru);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kata sandi berhasil diubah'), backgroundColor: Colors.green));
-        Navigator.pop(context);
-      }
-    } on FirebaseAuthException catch (e) {
-      String message = "Gagal mengubah kata sandi.";
-      if (e.code == 'wrong-password') {
-        message = "Kata sandi saat ini salah.";
-      } else if (e.code == 'weak-password') {
-        message = "Kata sandi baru terlalu lemah.";
-      }
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
+      if (response is Map && response["success"] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kata sandi berhasil diubah'), backgroundColor: Colors.green));
+          Navigator.pop(context);
+        }
+      } else {
+        final message = (response is Map ? response["message"] : null) ?? "Gagal mengubah kata sandi.";
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString()), backgroundColor: Colors.red));
+        }
       }
     } catch (e) {
       if (mounted) {

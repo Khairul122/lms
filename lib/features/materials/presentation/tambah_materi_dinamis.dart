@@ -3,7 +3,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:guru/services/api_service.dart';
 import 'package:guru/core/widgets/file_source_dialog.dart';
-import 'package:guru/core/services/fcm_service.dart';
 
 class TambahMateriDinamis extends StatefulWidget {
   final String classCode;
@@ -97,17 +96,6 @@ class _TambahMateriDinamisState extends State<TambahMateriDinamis> {
       final response = await ApiService.post('/materials', body);
 
       if (response != null && (response['success'] == true || response['data'] != null)) {
-        // 3. Push Notification ke siswa (Opsional via FCM)
-        try {
-          await FCMService.sendNotification(
-            classCode: widget.classCode,
-            title: '${widget.className} - Materi Baru',
-            body: 'Pertemuan ${widget.pertemuanKe}: ${_judulController.text.trim()}',
-          );
-        } catch (fcmErr) {
-          debugPrint("FCM Error (Ignored): $fcmErr");
-        }
-
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Materi berhasil diunggah!')),

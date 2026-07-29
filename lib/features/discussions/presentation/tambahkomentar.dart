@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:guru/core/services/fcm_service.dart';
-import 'package:guru/features/auth/data/auth_repository.dart';
 import 'package:guru/features/discussions/data/discussion_repository.dart';
 
 class TambahKomentar extends StatefulWidget {
@@ -21,37 +18,7 @@ class TambahKomentar extends StatefulWidget {
 
 class _TambahKomentarState extends State<TambahKomentar> {
   final TextEditingController _commentController = TextEditingController();
-  final AuthRepository _authRepository = AuthRepository();
   final DiscussionRepository _discussionRepository = DiscussionRepository();
-  String? _userName;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUserName();
-    _subscribeToTopic();
-  }
-
-  void _subscribeToTopic() async {
-    await FirebaseMessaging.instance.subscribeToTopic('chat_${widget.classCode}');
-  }
-
-  Future<void> _loadUserName() async {
-    try {
-      final profile = await _authRepository.profile();
-      if (mounted) {
-        setState(() {
-          _userName = profile['name'] ?? 'Guru';
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _userName = 'Guru';
-        });
-      }
-    }
-  }
 
   @override
   void dispose() {
@@ -63,18 +30,10 @@ class _TambahKomentarState extends State<TambahKomentar> {
     if (_commentController.text.trim().isEmpty) return;
 
     final String message = _commentController.text.trim();
-    final String senderName = _userName ?? 'Guru';
 
     try {
       await _discussionRepository.sendDiscussion(
         classCode: widget.classCode,
-        message: message,
-      );
-
-      await FCMService.sendChatNotification(
-        classCode: widget.classCode,
-        className: widget.className,
-        senderName: senderName,
         message: message,
       );
 

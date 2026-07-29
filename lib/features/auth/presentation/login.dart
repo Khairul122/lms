@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 import 'package:guru/features/onboarding/presentation/halamanutama.dart';
 import 'package:guru/features/auth/presentation/daftar.dart';
 import 'package:guru/features/auth/presentation/lupapassword.dart'; // Import file lupa password
-import 'package:guru/config/api_config.dart'; // Import ApiConfig
+import 'package:guru/services/api_service.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -30,60 +26,6 @@ class _LoginState extends State<Login> {
     super.dispose();
   }
 
-  /// SINKRONISASI TOKEN LARAVEL SANCTUM MENGGUNAKAN API CONFIG
-  Future<bool> syncLaravelUser() async {
-    try {
-      final firebaseUser = FirebaseAuth.instance.currentUser;
-      if (firebaseUser == null) return false;
-
-      final response = await http.post(
-        Uri.parse("${ApiConfig.baseUrl}/firebase-login"),
-        headers: ApiConfig.headers,
-        body: jsonEncode({"email": firebaseUser.email}),
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && data["success"] == true) {
-        final user = data["user"];
-        final token = data["token"];
-        final prefs = await SharedPreferences.getInstance();
-
-        if (token != null) {
-          await prefs.setString("token", token.toString());
-        }
-
-        if (user != null) {
-          await prefs.setInt("user_id", user["id"] ?? 0);
-          await prefs.setString("name", user["name"] ?? "");
-          await prefs.setString("email", user["email"] ?? "");
-          await prefs.setString("role", user["role"] ?? "");
-          await prefs.setString("nip", user["nip"] ?? "");
-          await prefs.setString("phone", user["phone"] ?? "");
-        }
-
-        await prefs.reload();
-        return true;
-      }
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Akun belum terdaftar sebagai Guru pada LMS")),
-        );
-      }
-      await FirebaseAuth.instance.signOut();
-      return false;
-    } catch (e) {
-      debugPrint("Error sync Laravel Guru: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal terhubung ke Laravel server\n$e")),
-        );
-      }
-      return false;
-    }
-  }
-
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -94,63 +36,55 @@ class _LoginState extends State<Login> {
 
     setState(() => _isLoading = true);
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      final response = await ApiService.post("/login", {
+        "email": _emailController.text.trim(),
+        "password": _passwordController.text.trim(),
+      });
 
-      bool success = await syncLaravelUser();
-      if (success) {
+      if (response is Map && response["success"] == true) {
+        final user = response["user"];
+        final token = response["token"];
+
+        if (user != null && user["role"] != null && user["role"] != "guru") {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Akun ini bukan akun Guru")),
+            );
+          }
+          return;
+        }
+
+        final prefs = await SharedPreferences.getInstance();
+        if (token != null) {
+          await prefs.setString("token", token.toString());
+        }
+        if (user != null) {
+          await prefs.setInt("user_id", user["id"] ?? 0);
+          await prefs.setString("name", user["name"] ?? "");
+          await prefs.setString("email", user["email"] ?? "");
+          await prefs.setString("role", user["role"] ?? "");
+          await prefs.setString("nip", user["nip"] ?? "");
+          await prefs.setString("phone", user["phone"] ?? "");
+        }
+        await prefs.reload();
+
         if (mounted) {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const HalamanUtama()),
           );
         }
-      }
-    } on FirebaseAuthException catch (e) {
-      String message = 'Login gagal';
-      if (e.code == 'user-not-found') message = 'Email tidak terdaftar';
-      if (e.code == 'wrong-password') message = 'Kata sandi salah';
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-      final User? user = userCredential.user;
-
-      if (user != null) {
-        bool success = await syncLaravelUser();
-        if (success) {
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HalamanUtama()),
-            );
-          }
+      } else {
+        final message = (response is Map ? response["message"] : null) ?? "Email atau kata sandi salah";
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString())));
         }
       }
     } catch (e) {
+      debugPrint("Error login guru: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Koneksi bermasalah atau gagal: $e')),
+          SnackBar(content: Text("Gagal terhubung ke server\n$e")),
         );
       }
     } finally {
@@ -283,52 +217,6 @@ class _LoginState extends State<Login> {
                                 letterSpacing: 1.1,
                               ),
                             ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Separator
-                  Row(
-                    children: [
-                      Expanded(child: Container(height: 1, color: Colors.black12)),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 15),
-                        child: Text('ATAU', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.w500)),
-                      ),
-                      Expanded(child: Container(height: 1, color: Colors.black12)),
-                    ],
-                  ),
-
-                  const SizedBox(height: 30),
-
-                  // Google Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: OutlinedButton(
-                      onPressed: _isLoading ? null : _signInWithGoogle,
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        side: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.g_mobiledata, color: Colors.red, size: 40),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Masuk dengan Google',
-                            style: TextStyle(
-                              color: Colors.black.withOpacity(0.6),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
                     ),
                   ),
 

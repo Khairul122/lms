@@ -1,17 +1,6 @@
 import 'package:guru/services/api_service.dart';
 
 class AuthRepository {
-  Future<Map<String, dynamic>> firebaseLogin({
-    required String email,
-  }) async {
-    return await ApiService.post(
-      "/firebase-login",
-      {
-        "email": email,
-      },
-    );
-  }
-
   Future<Map<String, dynamic>> register({
     required String name,
     required String username,

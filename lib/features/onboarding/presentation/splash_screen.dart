@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guru/features/onboarding/presentation/intro1.dart';
 import 'package:guru/features/onboarding/presentation/halamanutama.dart';
 
@@ -16,10 +16,13 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     // Cek Status Login setelah 3 detik
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 3), () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.reload();
+      final token = prefs.getString("token");
+
       if (mounted) {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
+        if (token != null && token.isNotEmpty) {
           // Jika sudah login, ke Halaman Utama
           Navigator.pushReplacement(
             context,

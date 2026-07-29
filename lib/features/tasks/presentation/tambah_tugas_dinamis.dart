@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:guru/features/tasks/data/task_repository.dart';
-import 'package:guru/core/services/fcm_service.dart';
 
 class TambahTugasDinamis extends StatefulWidget {
   final String classCode;
@@ -65,18 +64,6 @@ class _TambahTugasDinamisState extends State<TambahTugasDinamis> {
       // 1. Simpan Ke Laravel API
       final response = await _repository.createTask(payload);
       debugPrint("Response Laravel: $response");
-
-      // 2. Kirim Push Notification via FCM Service (Opsional)
-      try {
-        await FCMService.sendNotification(
-          classCode: widget.classCode,
-          title: '${widget.className} - Tugas Baru',
-          body:
-              'Pertemuan ${widget.pertemuanKe}: ${_judulController.text.trim()}. Deadline: ${_deadlineController.text}',
-        );
-      } catch (fcmError) {
-        debugPrint("FCM Error (Non-fatal): $fcmError");
-      }
 
       if (!mounted) return;
 

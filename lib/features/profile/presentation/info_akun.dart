@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:guru/features/profile/data/profile_repository.dart';
 import 'package:guru/features/auth/presentation/ubah_sandi.dart';
 
@@ -11,8 +10,6 @@ class InfoProfil extends StatefulWidget {
 }
 
 class _InfoProfilState extends State<InfoProfil> {
-  final User? user = FirebaseAuth.instance.currentUser;
-
   final ProfileRepository _repository = ProfileRepository();
   bool _isEditing = false;
   
@@ -61,11 +58,7 @@ Future<void> _saveProfile() async {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-body: user == null
-    ? const Center(
-        child: Text("Silakan login kembali"),
-      )
-    : FutureBuilder<Map<String, dynamic>>(
+body: FutureBuilder<Map<String, dynamic>>(
         future: _repository.getProfile(),
         builder: (context, snapshot) {
 if (snapshot.connectionState == ConnectionState.waiting) {

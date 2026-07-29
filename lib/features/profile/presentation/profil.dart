@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guru/features/profile/data/profile_repository.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:guru/services/api_service.dart';
 import 'package:guru/core/widgets/bottom_nav_bar.dart';
 import 'package:guru/app_navigation.dart';
 import 'package:guru/features/auth/presentation/login.dart';
@@ -17,8 +17,31 @@ class Profil extends StatefulWidget {
 
 class _ProfilState extends State<Profil> {
   final ProfileRepository _repository = ProfileRepository();
-  final User? user = FirebaseAuth.instance.currentUser;
   bool _isUploading = false;
+
+  Future<void> _logout() async {
+    try {
+      await ApiService.post("/logout", {});
+    } catch (_) {
+      // Abaikan error logout API, tetap lanjutkan membersihkan sesi lokal
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove("token");
+    await prefs.remove("user_id");
+    await prefs.remove("name");
+    await prefs.remove("email");
+    await prefs.remove("role");
+    await prefs.remove("nip");
+    await prefs.remove("phone");
+
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Login()),
+      );
+    }
+  }
 
   Future<void> _pickAndUploadImage() async {
     final picker = ImagePicker();
@@ -239,15 +262,7 @@ class _ProfilState extends State<Profil> {
                           children: [
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: () async {
-                                  await FirebaseAuth.instance.signOut();
-                                  if (context.mounted) {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(builder: (context) => const Login()),
-                                    );
-                                  }
-                                },
+                                onPressed: _logout,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.transparent,
                                   elevation: 0,
@@ -308,27 +323,6 @@ class _ProfilState extends State<Profil> {
                               ),
                             ),
                           ],
-                        ),
-                        const SizedBox(height: 20),
-
-                        // Tombol Tes Crash
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () => FirebaseCrashlytics.instance.crash(),
-                            icon: const Icon(Icons.bug_report, color: Colors.red),
-                            label: const Text(
-                              'Tes Crash (Debug)',
-                              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Colors.red),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                          ),
                         ),
                         const SizedBox(height: 20),
                       ],

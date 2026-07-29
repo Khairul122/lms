@@ -1,10 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:guru/core/config/api_config.dart';
 import 'package:guru/core/theme/app_theme.dart';
 import 'package:guru/features/onboarding/presentation/splash_screen.dart';
 import 'package:guru/features/onboarding/presentation/halamanutama.dart';
@@ -33,72 +29,22 @@ class AuthCheck extends StatefulWidget {
 
 class _AuthCheckState extends State<AuthCheck> {
   bool _isSyncing = true;
-  bool _hasFirebaseUser = false;
+  bool _isLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
-    _checkAndSyncLaravel();
+    _checkLoginStatus();
   }
 
-  Future<void> _checkAndSyncLaravel() async {
-    final firebaseUser = FirebaseAuth.instance.currentUser;
-
-    if (firebaseUser == null) {
-      if (mounted) {
-        setState(() {
-          _hasFirebaseUser = false;
-          _isSyncing = false;
-        });
-      }
-      return;
-    }
-
-    try {
-      final response = await http.post(
-        Uri.parse("${ApiConfig.baseUrl}/firebase-login"),
-        headers: ApiConfig.headers,
-        body: jsonEncode({
-          "email": firebaseUser.email,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 && data["success"] == true) {
-        final user = data["user"];
-        final prefs = await SharedPreferences.getInstance();
-
-        if (data["token"] != null) {
-          await prefs.setString("token", data["token"].toString());
-        }
-
-        if (user != null) {
-          await prefs.setInt("user_id", user["id"] ?? 0);
-          await prefs.setString("name", user["name"] ?? "");
-          await prefs.setString("email", user["email"] ?? "");
-          await prefs.setString("role", user["role"] ?? "");
-          await prefs.setString("nip", user["nip"] ?? "");
-          await prefs.setString("phone", user["phone"] ?? "");
-        }
-
-        await prefs.reload();
-
-        if (mounted) {
-          setState(() {
-            _hasFirebaseUser = true;
-            _isSyncing = false;
-          });
-        }
-        return;
-      }
-    } catch (e) {
-      debugPrint("Gagal auto-sync Laravel saat startup: $e");
-    }
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final token = prefs.getString("token");
 
     if (mounted) {
       setState(() {
-        _hasFirebaseUser = false;
+        _isLoggedIn = token != null && token.isNotEmpty;
         _isSyncing = false;
       });
     }
@@ -110,7 +56,7 @@ class _AuthCheckState extends State<AuthCheck> {
       return const SplashScreen();
     }
 
-    if (_hasFirebaseUser) {
+    if (_isLoggedIn) {
       return const HalamanUtama();
     } else {
       return const Login();
