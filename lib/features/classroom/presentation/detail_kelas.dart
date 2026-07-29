@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-import 'package:lms/features/classroom/diskusi_kelas.dart';
-import 'package:lms/features/classroom/daftar_pertemuan.dart';
-import 'package:lms/features/tasks/daftar_tugas.dart';
+import 'package:lms/features/discussions/presentation/diskusi_kelas.dart';
+import 'package:lms/features/classroom/presentation/daftar_pertemuan.dart';
+import 'package:lms/features/tasks/presentation/daftar_tugas.dart';
 
 class DetailKelasScreen extends StatefulWidget {
   final String classCode;

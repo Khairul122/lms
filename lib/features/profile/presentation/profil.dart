@@ -3,13 +3,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
-import 'package:lms/features/classroom/dftr_kelas.dart';
-import 'package:lms/features/tasks/daftar_tugas.dart';
-import 'package:lms/features/profile/info_profil.dart';
-import 'package:lms/features/auth/ubah_kata_sandi.dart';
-import 'package:lms/features/notifications/notifikasi.dart';
-import 'package:lms/features/auth/login.dart';
-import 'package:lms/features/onboarding/homepage.dart';
+import 'package:lms/features/classroom/presentation/dftr_kelas.dart';
+import 'package:lms/features/tasks/presentation/daftar_tugas.dart';
+import 'package:lms/features/profile/presentation/info_profil.dart';
+import 'package:lms/features/auth/presentation/ubah_kata_sandi.dart';
+import 'package:lms/features/notifications/presentation/notifikasi.dart';
+import 'package:lms/features/auth/presentation/login.dart';
+import 'package:lms/features/onboarding/presentation/homepage.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lms/services/api_service.dart';
-import 'package:lms/features/classroom/detail_pertemuan.dart';
+import 'package:lms/features/classroom/presentation/detail_pertemuan.dart';
 
 class DaftarPertemuanScreen extends StatelessWidget {
   final String classCode;

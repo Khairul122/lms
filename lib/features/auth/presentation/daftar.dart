@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
-import 'package:lms/features/auth/login.dart';
+import 'package:lms/features/auth/presentation/login.dart';
 import 'package:lms/core/services/notification_service.dart';
-import 'package:lms/features/onboarding/homepage.dart';
+import 'package:lms/features/onboarding/presentation/homepage.dart';
 
 class DaftarScreen extends StatefulWidget {
   const DaftarScreen({super.key});

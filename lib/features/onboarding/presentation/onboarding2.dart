@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lms/features/onboarding/onboarding2.dart';
+import 'package:lms/features/auth/presentation/login.dart';
 
-class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
-
-  @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
-}
-
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  int currentPage = 0;
+class Onboarding2Screen extends StatelessWidget {
+  const Onboarding2Screen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +14,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             // Status bar area
             const SizedBox(height: 20),
 
-            // Main illustration
-            Expanded(flex: 3, child: _buildIllustration()),
+            // Top Section with Blue Abstract Shapes
+            Expanded(flex: 3, child: _buildTopSection()),
 
-            // Text content
+            // Text Content
             Expanded(
               flex: 2,
               child: Padding(
@@ -32,9 +25,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Title
+                    // Main Title
                     const Text(
-                      'Selamat Datang\nDi Edusmart',
+                      'Ribuan Materi\nBerkualitas',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,
@@ -48,7 +41,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                     // Subtitle
                     const Text(
-                      'Cara baru yang cerdas untuk\nbelajar kapan saja dan di mana saja',
+                      'Cara baru yang cerdas untuk belajar\nkapan saja dan di mana saja',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
@@ -62,28 +55,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // Page indicator dots
+            // Page Indicator Dots
             const SizedBox(height: 20),
             _buildPageIndicator(),
 
             const SizedBox(height: 40),
 
-            // Continue button
+            // Ayo Mulai Button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const Onboarding2Screen(),
+                        builder: (context) => const LoginScreen(),
                       ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2196F3),
+                    backgroundColor: const Color(0xFF4A90E2),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -92,7 +85,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     elevation: 0,
                   ),
                   child: const Text(
-                    'Lanjutkan',
+                    'Ayo Mulai',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -106,12 +99,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _buildIllustration() {
+  Widget _buildTopSection() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Image.asset(
-          'assets/images/intro1.png',
+          'assets/images/intro2.png',
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
             return const Icon(
@@ -130,20 +123,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: 12,
-          height: 12,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(
-            color: const Color(0xFF2196F3),
-            shape: BoxShape.circle,
+            color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(4),
           ),
         ),
         const SizedBox(width: 8),
         Container(
-          width: 12,
-          height: 12,
+          width: 8,
+          height: 8,
           decoration: BoxDecoration(
-            color: Colors.grey.shade300,
-            shape: BoxShape.circle,
+            color: const Color(0xFF4A90E2),
+            borderRadius: BorderRadius.circular(4),
           ),
         ),
       ],

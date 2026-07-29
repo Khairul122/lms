@@ -4,11 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:lms/features/onboarding/homepage.dart';
-import 'package:lms/features/auth/daftar.dart';
-import 'package:lms/features/auth/lupa_sandi.dart';
+import 'package:lms/features/onboarding/presentation/homepage.dart';
+import 'package:lms/features/auth/presentation/daftar.dart';
+import 'package:lms/features/auth/presentation/lupa_sandi.dart';
 import 'package:lms/core/services/notification_service.dart';
-import 'package:lms/features/auth/lengkapi_profil.dart';
+import 'package:lms/features/auth/presentation/lengkapi_profil.dart';
 import 'package:lms/services/api_service.dart'; // 🔥 Import ApiService
 
 class LoginScreen extends StatefulWidget {

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lms/services/api_service.dart';
-import 'package:lms/features/tasks/daftar_tugas.dart';
-import 'package:lms/features/profile/profil.dart';
-import 'package:lms/features/classroom/detail_kelas.dart';
-import 'package:lms/features/onboarding/homepage.dart';
+import 'package:lms/features/tasks/presentation/daftar_tugas.dart';
+import 'package:lms/features/profile/presentation/profil.dart';
+import 'package:lms/features/classroom/presentation/detail_kelas.dart';
+import 'package:lms/features/onboarding/presentation/homepage.dart';
 
 class DaftarKelasScreen extends StatefulWidget {
   const DaftarKelasScreen({super.key});

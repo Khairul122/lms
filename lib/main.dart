@@ -6,9 +6,9 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:ui';
 
-import 'features/onboarding/onboarding.dart';
+import 'features/onboarding/presentation/onboarding.dart';
 import 'package:lms/core/services/notification_service.dart';
-import 'features/onboarding/homepage.dart';
+import 'features/onboarding/presentation/homepage.dart';
 import 'package:lms/services/api_service.dart'; // 🔥 Import ApiService
 
 void main() async {

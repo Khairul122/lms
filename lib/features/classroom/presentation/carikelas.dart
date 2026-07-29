@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart'; // Pastikan path ApiService benar
-import 'package:lms/features/classroom/detail_kelas.dart';
-import 'package:lms/features/notifications/notifikasi.dart';
+import 'package:lms/features/classroom/presentation/detail_kelas.dart';
+import 'package:lms/features/notifications/presentation/notifikasi.dart';
 
 class CariKelasScreen extends StatefulWidget {
   const CariKelasScreen({super.key});

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:lms/services/api_service.dart';
-import 'package:lms/features/tasks/detail_tugas.dart';
-import 'package:lms/features/onboarding/homepage.dart';
-import 'package:lms/features/classroom/dftr_kelas.dart';
-import 'package:lms/features/profile/profil.dart';
+import 'package:lms/features/tasks/presentation/detail_tugas.dart';
+import 'package:lms/features/onboarding/presentation/homepage.dart';
+import 'package:lms/features/classroom/presentation/dftr_kelas.dart';
+import 'package:lms/features/profile/presentation/profil.dart';
 
 class DaftarTugasScreen extends StatefulWidget {
   final String? classCode; // 💡 Menampung kode kelas jika dibuka dari Detail Kelas

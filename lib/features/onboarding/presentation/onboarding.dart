@@ -1,8 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:lms/features/auth/login.dart';
+import 'package:lms/features/onboarding/presentation/onboarding2.dart';
 
-class Onboarding2Screen extends StatelessWidget {
-  const Onboarding2Screen({super.key});
+class OnboardingScreen extends StatefulWidget {
+  const OnboardingScreen({super.key});
+
+  @override
+  State<OnboardingScreen> createState() => _OnboardingScreenState();
+}
+
+class _OnboardingScreenState extends State<OnboardingScreen> {
+  int currentPage = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -14,10 +21,10 @@ class Onboarding2Screen extends StatelessWidget {
             // Status bar area
             const SizedBox(height: 20),
 
-            // Top Section with Blue Abstract Shapes
-            Expanded(flex: 3, child: _buildTopSection()),
+            // Main illustration
+            Expanded(flex: 3, child: _buildIllustration()),
 
-            // Text Content
+            // Text content
             Expanded(
               flex: 2,
               child: Padding(
@@ -25,9 +32,9 @@ class Onboarding2Screen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Main Title
+                    // Title
                     const Text(
-                      'Ribuan Materi\nBerkualitas',
+                      'Selamat Datang\nDi Edusmart',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 28,
@@ -41,7 +48,7 @@ class Onboarding2Screen extends StatelessWidget {
 
                     // Subtitle
                     const Text(
-                      'Cara baru yang cerdas untuk belajar\nkapan saja dan di mana saja',
+                      'Cara baru yang cerdas untuk\nbelajar kapan saja dan di mana saja',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
@@ -55,28 +62,28 @@ class Onboarding2Screen extends StatelessWidget {
               ),
             ),
 
-            // Page Indicator Dots
+            // Page indicator dots
             const SizedBox(height: 20),
             _buildPageIndicator(),
 
             const SizedBox(height: 40),
 
-            // Ayo Mulai Button
+            // Continue button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushReplacement(
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
+                        builder: (context) => const Onboarding2Screen(),
                       ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A90E2),
+                    backgroundColor: const Color(0xFF2196F3),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -85,7 +92,7 @@ class Onboarding2Screen extends StatelessWidget {
                     elevation: 0,
                   ),
                   child: const Text(
-                    'Ayo Mulai',
+                    'Lanjutkan',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -99,12 +106,12 @@ class Onboarding2Screen extends StatelessWidget {
     );
   }
 
-  Widget _buildTopSection() {
+  Widget _buildIllustration() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Image.asset(
-          'assets/images/intro2.png',
+          'assets/images/intro1.png',
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
             return const Icon(
@@ -123,20 +130,20 @@ class Onboarding2Screen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 12,
+          height: 12,
           decoration: BoxDecoration(
-            color: Colors.grey[300],
-            borderRadius: BorderRadius.circular(4),
+            color: const Color(0xFF2196F3),
+            shape: BoxShape.circle,
           ),
         ),
         const SizedBox(width: 8),
         Container(
-          width: 8,
-          height: 8,
+          width: 12,
+          height: 12,
           decoration: BoxDecoration(
-            color: const Color(0xFF4A90E2),
-            borderRadius: BorderRadius.circular(4),
+            color: Colors.grey.shade300,
+            shape: BoxShape.circle,
           ),
         ),
       ],

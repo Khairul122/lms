@@ -1,32 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:lms/features/auth/atur_ulang_sandi.dart';
+import 'package:lms/features/auth/presentation/login.dart';
 
-class LupaSandiScreen extends StatefulWidget {
-  const LupaSandiScreen({super.key});
+class AturUlangSandiScreen extends StatefulWidget {
+  const AturUlangSandiScreen({super.key});
 
   @override
-  State<LupaSandiScreen> createState() => _LupaSandiScreenState();
+  State<AturUlangSandiScreen> createState() => _AturUlangSandiScreenState();
 }
 
-class _LupaSandiScreenState extends State<LupaSandiScreen> {
-  final TextEditingController _emailController = TextEditingController();
+class _AturUlangSandiScreenState extends State<AturUlangSandiScreen> {
+  final TextEditingController _codeController = TextEditingController();
+  final TextEditingController _newPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  bool _obscureText1 = true;
+  bool _obscureText2 = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _codeController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
-  Future<void> _resetPassword() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) {
+  Future<void> _updatePassword() async {
+    final code = _codeController.text.trim();
+    final newPassword = _newPasswordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (code.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Masukkan email Anda terlebih dahulu!'),
-          backgroundColor: Colors.orange,
-        ),
+        const SnackBar(content: Text('Semua field harus diisi!'), backgroundColor: Colors.orange),
+      );
+      return;
+    }
+
+    if (newPassword != confirmPassword) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Konfirmasi kata sandi tidak cocok!'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -34,77 +47,38 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
-      if (mounted) {
-        _showSuccessDialog();
-      }
-    } on FirebaseAuthException catch (e) {
-      String message = "Gagal mengirim email reset.";
-      if (e.code == 'user-not-found') {
-        message = "Email tidak terdaftar di sistem.";
-      } else if (e.code == 'invalid-email') {
-        message = "Format email tidak valid.";
-      }
+      await FirebaseAuth.instance.confirmPasswordReset(
+        code: code,
+        newPassword: newPassword,
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(message), backgroundColor: Colors.red),
+          const SnackBar(content: Text('Kata sandi berhasil diubah! Silakan login.'), backgroundColor: Colors.green),
         );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      String message = "Gagal mengubah sandi.";
+      if (e.code == 'expired-action-code') {
+        message = "Kode sudah kadaluarsa. Silakan minta link baru.";
+      } else if (e.code == 'invalid-action-code') {
+        message = "Kode tidak valid. Periksa kembali kode di email Anda.";
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.red));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
-          children: [
-            Icon(Icons.check_circle, color: Color(0xFF38B0FE)),
-            SizedBox(width: 10),
-            Text('Link Terkirim!', style: TextStyle(fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: const Text(
-          'Instruksi pengaturan ulang kata sandi telah dikirim ke email Anda. Silakan periksa kotak masuk atau folder spam.',
-          style: TextStyle(fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AturUlangSandiScreen()),
-              );
-            },
-            child: const Text(
-              'LANJUTKAN',
-              style: TextStyle(color: Color(0xFF38B0FE), fontWeight: FontWeight.bold),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text(
-              'KEMBALI',
-              style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -146,26 +120,51 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
                 children: [
                   const SizedBox(height: 180),
                   const Text(
-                    'Lupa Kata Sandi?',
+                    'Atur Ulang Sandi',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
                   ),
                   const SizedBox(height: 15),
                   const Text(
-                    'Masukkan email Anda untuk mendapatkan link reset kata sandi',
+                    'Lengkapi data di bawah ini untuk mengubah kata sandi Anda',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 14),
                   ),
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 50),
 
-                  _buildTextField(_emailController, 'Email Terdaftar', icon: Icons.email_outlined, keyboardType: TextInputType.emailAddress),
+                  _buildTextField(_codeController, 'Kode dari Email', icon: Icons.vpn_key_outlined),
+                  const SizedBox(height: 20),
+                  
+                  _buildTextField(
+                    _newPasswordController, 
+                    'Kata Sandi Baru', 
+                    icon: Icons.lock_outline, 
+                    isPassword: _obscureText1,
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureText1 ? Icons.visibility_off : Icons.visibility, color: Colors.grey, size: 20),
+                      onPressed: () => setState(() => _obscureText1 = !_obscureText1),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildTextField(
+                    _confirmPasswordController, 
+                    'Konfirmasi Sandi', 
+                    icon: Icons.lock_reset_outlined, 
+                    isPassword: _obscureText2,
+                    suffixIcon: IconButton(
+                      icon: Icon(_obscureText2 ? Icons.visibility_off : Icons.visibility, color: Colors.grey, size: 20),
+                      onPressed: () => setState(() => _obscureText2 = !_obscureText2),
+                    ),
+                  ),
+
                   const SizedBox(height: 40),
 
                   SizedBox(
                     width: double.infinity,
                     height: 55,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _resetPassword,
+                      onPressed: _isLoading ? null : _updatePassword,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF38B0FE),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -175,11 +174,12 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
                       child: _isLoading
                           ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
-                              'KIRIM LINK RESET',
+                              'GANTI SANDI',
                               style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.1),
                             ),
                     ),
                   ),
+                  const SizedBox(height: 50),
                 ],
               ),
             ),
@@ -198,7 +198,8 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {TextInputType keyboardType = TextInputType.text, IconData? icon}) {
+  Widget _buildTextField(TextEditingController controller, String hint, 
+      {bool isPassword = false, IconData? icon, Widget? suffixIcon}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -213,10 +214,11 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
       ),
       child: TextField(
         controller: controller,
-        keyboardType: keyboardType,
+        obscureText: isPassword,
         decoration: InputDecoration(
           hintText: hint,
           prefixIcon: icon != null ? Icon(icon, color: const Color(0xFF38B0FE), size: 20) : null,
+          suffixIcon: suffixIcon,
           hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
           contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 18),
           border: OutlineInputBorder(

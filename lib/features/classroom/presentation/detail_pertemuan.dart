@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:lms/features/tasks/daftar_tugas.dart';
-import 'package:lms/features/materials/lampiran_materi.dart';
+import 'package:lms/features/tasks/presentation/daftar_tugas.dart';
+import 'package:lms/features/materials/presentation/lampiran_materi.dart';
 
 class DetailPertemuan extends StatelessWidget {
   final String classCode;
