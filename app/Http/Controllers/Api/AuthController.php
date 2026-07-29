@@ -93,7 +93,7 @@ class AuthController extends Controller
                 'mata_pelajaran' => $user->mata_pelajaran,
                 'sekolah_asal'   => $user->sekolah_asal,
                 'alamat'         => $user->alamat,
-                'photo'          => $user->photo,
+                'photo'          => $user->photo_url ?? $user->photo,
             ],
         ]);
     }
@@ -102,10 +102,13 @@ class AuthController extends Controller
     {
         $user = $action->execute($request->user(), $request->all());
 
+        $userData = $user->toArray();
+        $userData['photo'] = $user->photo_url ?? $user->photo;
+
         return response()->json([
             'success' => true,
             'message' => 'Profil berhasil diperbarui.',
-            'user'    => $user,
+            'user'    => $userData,
         ]);
     }
 

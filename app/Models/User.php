@@ -36,6 +36,27 @@ class User extends Authenticatable implements JWTSubject
         'remember_token',
     ];
 
+    protected $appends = [
+        'photo_url',
+    ];
+
+    public function getPhotoUrlAttribute(): ?string
+    {
+        if (!$this->photo) {
+            return null;
+        }
+
+        if (str_starts_with($this->photo, 'http://') || str_starts_with($this->photo, 'https://') || str_starts_with($this->photo, 'data:image')) {
+            return $this->photo;
+        }
+
+        try {
+            return request()->schemeAndHttpHost() . '/' . ltrim($this->photo, '/');
+        } catch (\Throwable $e) {
+            return asset(ltrim($this->photo, '/'));
+        }
+    }
+
     protected function casts(): array
     {
         return [
