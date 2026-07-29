@@ -5,7 +5,7 @@ class ApiConfig {
   static String get baseUrl {
     if (customBaseUrl.isNotEmpty) return customBaseUrl;
     // Default URL (Fallback ke LocalToNet Tunnel HTTPS)
-    return 'https://xbncmdd6jn.localto.net/api';
+    return 'https://backend-lms.synectra.xyz/api';
   }
 
   static String get rootUrl => baseUrl.replaceAll('/api', '');
