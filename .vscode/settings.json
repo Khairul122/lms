@@ -1,0 +1,22 @@
+{
+  "dart.flutterSdkPath": null,
+  "dart.analysisExcludedFolders": [
+    ".dart_tool",
+    "build"
+  ],
+  "dart.enableSdkFormatter": true,
+  "dart.lineLength": 80,
+  "files.exclude": {
+    "**/.dart_tool": true,
+    "**/.flutter-plugins": true,
+    "**/.flutter-plugins-dependencies": true,
+    "**/.packages": true,
+    "**/build": true
+  },
+  "search.exclude": {
+    "**/.dart_tool": true,
+    "**/build": true
+  }
+}
+
+
