@@ -1,59 +1,130 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🖥️ EduSmart LMS - Backend REST API & Admin Panel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+![Laravel](https://img.shields.io/badge/Laravel-11.x-FF2D20?style=for-the-badge&logo=laravel)
+![AdminLTE](https://img.shields.io/badge/AdminLTE-3.2-367FA9?style=for-the-badge&logo=bootstrap)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql)
+![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4?style=for-the-badge&logo=php)
 
-## About Laravel
+Modul **EduSmart LMS Backend** adalah pusat mesin data (*Core Engine*) yang menyediakan layanan **REST API** untuk aplikasi mobile Flutter (Guru & Siswa) serta **Dashboard Web AdminLTE** untuk manajemen pengguna, kelas, dan konten akademik.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🛠️ Persyaratan Sistem (Prerequisites)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **PHP**: Versi `>= 8.2` (dengan ekstensi `mbstring`, `xml`, `bcmath`, `curl`, `zip`, `pdo_mysql`)
+- **Composer**: Versi `>= 2.x`
+- **Database**: MySQL Server `>= 8.0` / MariaDB
+- **Node.js & npm**: Node.js `>= 18.x`
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🚀 Panduan Installation & Setup Localhost
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. Buka Terminal & Masuk ke Folder Backend
+```bash
+cd edusmart-backend
+```
 
-## Laravel Sponsors
+### 2. Install Dependensi Composer
+```bash
+composer install
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 3. Konfigurasi Berkas `.env`
+Duplikasi file `.env.example` menjadi `.env`:
+```bash
+cp .env.example .env
+```
+Sesuaikan konfigurasi database dan URL lokal pada `.env`:
+```env
+APP_NAME=EduSmart
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
 
-### Premium Partners
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=edusmart_lms
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 4. Generate Application Key
+```bash
+php artisan key:generate
+```
 
-## Contributing
+### 5. Jalankan Migration & Database Seeder
+Buat database bernama `edusmart_lms` di MySQL, lalu jalankan:
+```bash
+php artisan migrate --seed
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 6. Buat Symbolic Link Storage
+```bash
+php artisan storage:link
+```
 
-## Code of Conduct
+### 7. Install Aset Vite Frontend
+```bash
+npm install
+npm run dev
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 8. Jalankan Dev Server Laravel
+```bash
+php artisan serve --host=0.0.0.0 --port=8000
+```
+Akses Dashboard Web di browser: `http://localhost:8000`
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🔑 Kredensial Default Login
 
-## License
+| Role | Email Login | Password |
+|:---|:---|:---|
+| **Administrator** | `admin@edusmart.id` | `password` |
+| **Guru** | `guru@edusmart.id` | `password` |
+| **Siswa** | `siswa@edusmart.id` | `password` |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 📡 Ringkasan Endpoint REST API
+
+Semua endpoint API mengembalikan format JSON standar:
+```json
+{
+  "success": true,
+  "message": "Pesan deskripsi",
+  "data": {}
+}
+```
+
+* `POST /api/login` - Authenticate User
+* `GET /api/profile` - Fetch Profile Data
+* `POST /api/profile` - Update Profile & Photo
+* `GET /api/classes` - Get Class Rooms List
+* `POST /api/classes` - Create Class Room (Guru)
+* `POST /api/classes/join` - Join Class Code (Siswa)
+* `GET /api/meetings` - Get Class Meetings
+* `GET /api/materials` - Access Learning Materials
+* `GET /api/tasks` - List Class Tasks
+* `POST /api/submissions` - Submit Task Answer (Siswa)
+* `POST /api/submissions/grade/{id}` - Grade Student Task (Guru)
+* `GET /api/discussions` - List Discussion Messages
+* `POST /api/discussions` - Post Discussion Message
+* `GET /api/notifications` - Get Real-time User Notifications
+
+---
+
+## 🚢 Production Deployment (Rumahweb FTP CI/CD)
+
+Deploy otomatis ke server hosting `backend-lms.synectra.xyz` berjalan setiap kali ada push ke branch `backend`:
+```bash
+git add .
+git commit -m "feat: perbarui backend"
+git push origin backend
+```
+CI/CD GitHub Actions akan otomatis mengompres dependensi `vendor.zip`, mengunggah file via FTP, dan menjalankan `deploy-hook.php` untuk ekstrasi otomatis di server.
