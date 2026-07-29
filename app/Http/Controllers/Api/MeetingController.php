@@ -2,69 +2,40 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Meeting\CreateMeetingAction;
+use App\Actions\Meeting\DeleteMeetingAction;
+use App\Actions\Meeting\UpdateMeetingAction;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Resources\MeetingResource;
 use App\Models\Meeting;
-use App\Models\ClassRoom;
+use App\Services\MeetingService;
+use App\Traits\ApiResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class MeetingController extends Controller
 {
-    /**
-     * 🔥 Mengambil daftar pertemuan (Filtered per kelas)
-     */
-    public function index(Request $request)
+    use ApiResponse;
+
+    public function __construct(protected MeetingService $meetingService)
     {
-        $query = Meeting::with('classroom');
-
-        // 1. Filter berdasarkan class_code (jika Flutter mengirim parameter ?class_code=XXXX)
-        if ($request->has('class_code') && !empty($request->class_code)) {
-            $classroom = ClassRoom::where('class_code', strtoupper(trim($request->class_code)))->first();
-            
-            if (!$classroom) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Kelas tidak ditemukan.',
-                    'data'    => []
-                ], 200);
-            }
-
-            $query->where('class_id', $classroom->id);
-        }
-        // 2. Filter berdasarkan class_id (jika Flutter mengirim parameter ?class_id=X)
-        elseif ($request->has('class_id') && !empty($request->class_id)) {
-            $query->where('class_id', $request->class_id);
-        }
-
-        // 3. Ambil data yang sudah difilter
-        $meetings = $query->orderBy('pertemuan', 'asc')
-            ->get()
-            ->map(function ($meeting) {
-                return [
-                    'id'             => $meeting->id,
-                    'class_id'       => $meeting->class_id,
-                    'class_code'     => optional($meeting->classroom)->class_code,
-                    'class_name'     => optional($meeting->classroom)->class_name,
-                    'pertemuan'      => $meeting->pertemuan,
-                    'nama_pertemuan' => $meeting->nama_pertemuan,
-                    'tema_pertemuan' => $meeting->tema_pertemuan,
-                    'created_at'     => $meeting->created_at,
-                ];
-            });
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Data pertemuan berhasil diambil.',
-            'data'    => $meetings
-        ], 200);
     }
 
     /**
-     * 🔥 Menambah pertemuan baru untuk kelas tertentu
+     * Mengambil daftar pertemuan (filtered per kelas)
      */
-    public function store(Request $request)
+    public function index(Request $request)
     {
-        // 1. Validasi Input
+        $meetings = $this->meetingService->listForApi($request->only(['class_code', 'class_id']));
+
+        return $this->success(MeetingResource::collection($meetings), 'Data pertemuan berhasil diambil.');
+    }
+
+    /**
+     * Menambah pertemuan baru untuk kelas tertentu
+     */
+    public function store(Request $request, CreateMeetingAction $action)
+    {
         $validator = Validator::make($request->all(), [
             'class_code'     => 'required|string',
             'nama_pertemuan' => 'required|string|max:255',
@@ -72,48 +43,52 @@ class MeetingController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors'  => $validator->errors()
-            ], 422);
+            return $this->error('Validasi gagal', 422, $validator->errors());
         }
 
-        try {
-            // 2. Cari Class ID berdasarkan class_code (misal: YMDUFJ)
-            $classroom = ClassRoom::where('class_code', strtoupper(trim($request->class_code)))->first();
+        $classroom = $this->meetingService->findClassByCode($request->class_code);
 
-            if (!$classroom) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kelas dengan kode tersebut tidak ditemukan.'
-                ], 404);
-            }
-
-            // 3. Hitung nomor pertemuan otomatis per kelas
-            $lastMeeting = Meeting::where('class_id', $classroom->id)->max('pertemuan');
-            $nextPertemuan = ($lastMeeting ?? 0) + 1;
-
-            // 4. Simpan ke database MySQL
-            $meeting = Meeting::create([
-                'class_id'       => $classroom->id,
-                'pertemuan'      => $nextPertemuan,
-                'nama_pertemuan' => $request->nama_pertemuan,
-                'tema_pertemuan' => $request->tema_pertemuan,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Pertemuan berhasil ditambahkan.',
-                'data'    => $meeting,
-            ], 201);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menyimpan pertemuan.',
-                'error'   => $e->getMessage()
-            ], 500);
+        if (!$classroom) {
+            return $this->notFound('Kelas dengan kode tersebut tidak ditemukan.');
         }
+
+        $meeting = $action->execute([
+            'class_id'       => $classroom->id,
+            'pertemuan'      => $this->meetingService->nextPertemuanNumber($classroom->id),
+            'nama_pertemuan' => $request->nama_pertemuan,
+            'tema_pertemuan' => $request->tema_pertemuan,
+        ]);
+
+        return $this->created($meeting, 'Pertemuan berhasil ditambahkan.');
+    }
+
+    public function show(Meeting $meeting)
+    {
+        $meeting->load('classroom');
+
+        return $this->success(new MeetingResource($meeting), 'Detail pertemuan berhasil diambil.');
+    }
+
+    public function update(Request $request, Meeting $meeting, UpdateMeetingAction $action)
+    {
+        $validator = Validator::make($request->all(), [
+            'nama_pertemuan' => 'sometimes|string|max:255',
+            'tema_pertemuan' => 'sometimes|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error('Validasi gagal', 422, $validator->errors());
+        }
+
+        $meeting = $action->execute($meeting, $request->only(['nama_pertemuan', 'tema_pertemuan']));
+
+        return $this->success($meeting, 'Pertemuan berhasil diperbarui.');
+    }
+
+    public function destroy(Meeting $meeting, DeleteMeetingAction $action)
+    {
+        $action->execute($meeting);
+
+        return $this->success(null, 'Pertemuan berhasil dihapus.');
     }
 }

@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\MeetingRequest;
-use App\Models\Meeting;
+use App\Actions\Meeting\CreateMeetingAction;
+use App\Actions\Meeting\DeleteMeetingAction;
+use App\Actions\Meeting\UpdateMeetingAction;
+use App\Http\Requests\Meeting\StoreMeetingRequest;
+use App\Http\Requests\Meeting\UpdateMeetingRequest;
 use App\Models\ClassRoom;
+use App\Models\Meeting;
 use Illuminate\Http\Request;
 
 class MeetingController extends Controller
@@ -28,9 +32,9 @@ class MeetingController extends Controller
         return view('meetings.create', compact('classes'));
     }
 
-    public function store(MeetingRequest $request)
+    public function store(StoreMeetingRequest $request, CreateMeetingAction $action)
     {
-        Meeting::create($request->validated());
+        $action->execute($request->validated());
 
         return redirect()
             ->route('meetings.index')
@@ -51,18 +55,18 @@ class MeetingController extends Controller
         return view('meetings.edit', compact('meeting', 'classes'));
     }
 
-    public function update(MeetingRequest $request, Meeting $meeting)
+    public function update(UpdateMeetingRequest $request, Meeting $meeting, UpdateMeetingAction $action)
     {
-        $meeting->update($request->validated());
+        $action->execute($meeting, $request->validated());
 
         return redirect()
             ->route('meetings.index')
             ->with('success', 'Pertemuan berhasil diperbarui.');
     }
 
-    public function destroy(Meeting $meeting)
+    public function destroy(Meeting $meeting, DeleteMeetingAction $action)
     {
-        $meeting->delete();
+        $action->execute($meeting);
 
         return redirect()
             ->route('meetings.index')
