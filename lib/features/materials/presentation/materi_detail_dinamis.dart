@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:url_launcher/url_launcher.dart'; // 🔥 TAMBAHAN
 
 class MateriDetailDinamis extends StatelessWidget {
@@ -23,9 +24,7 @@ class MateriDetailDinamis extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Gagal membuka file. Pastikan ada browser terinstall.')),
-        );
+        AppDialog.showError(context, 'Gagal membuka file. Pastikan ada browser terinstall.');
       }
     }
   }

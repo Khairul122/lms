@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/services/api_service.dart';
 import 'package:guru/features/tasks/presentation/berhasil_beri_nilai.dart';
 
@@ -97,17 +98,13 @@ class KasihPeniliaian {
                             } else {
                               final msg = res?['message'] ?? 'Gagal menyimpan nilai.';
                               if (dialogContext.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(msg)),
-                                );
+                                AppDialog.showError(context, msg);
                               }
                             }
                           } catch (e) {
                             debugPrint('❌ Gagal memberi nilai: $e');
                             if (dialogContext.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Gagal menyimpan nilai: $e')),
-                              );
+                              AppDialog.showError(context, 'Gagal menyimpan nilai: $e');
                             }
                           } finally {
                             if (dialogContext.mounted) setState(() => isLoading = false);

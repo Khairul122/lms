@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/features/classroom/data/meeting_repository.dart';
 
 class MenambahPertemuan extends StatefulWidget {
@@ -29,11 +29,7 @@ Future<void> _simpanPertemuan() async {
   if (_namaController.text.trim().isEmpty ||
       _temaController.text.trim().isEmpty) {
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Semua kolom harus diisi"),
-      ),
-    );
+    AppDialog.showError(context, "Semua kolom harus diisi");
 
     return;
   }
@@ -56,23 +52,15 @@ Future<void> _simpanPertemuan() async {
 
     if (mounted) {
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      await AppDialog.showSuccess(context, "Pertemuan berhasil ditambahkan");
 
-        const SnackBar(
-
-          content: Text("Pertemuan berhasil ditambahkan"),
-
-        ),
-
-      );
-
-      Navigator.pop(context);
+      if (mounted) Navigator.pop(context);
 
     }
 
   } catch (e) {
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    AppDialog.showError(context, e.toString());
 
       SnackBar(
 

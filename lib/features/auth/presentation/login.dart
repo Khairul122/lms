@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 
 import 'package:guru/features/onboarding/presentation/halamanutama.dart';
 import 'package:guru/features/auth/presentation/daftar.dart';
@@ -28,9 +29,7 @@ class _LoginState extends State<Login> {
 
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Email dan kata sandi harus diisi')),
-      );
+      AppDialog.showError(context, 'Email dan kata sandi harus diisi');
       return;
     }
 
@@ -47,9 +46,7 @@ class _LoginState extends State<Login> {
 
         if (user != null && user["role"] != null && user["role"] != "guru") {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Akun ini bukan akun Guru")),
-            );
+            AppDialog.showError(context, "Akun ini bukan akun Guru");
           }
           return;
         }
@@ -59,7 +56,7 @@ class _LoginState extends State<Login> {
           await prefs.setString("token", token.toString());
         }
         if (user != null) {
-          await prefs.setInt("user_id", user["id"] ?? 0);
+          await prefs.setInt("user_id", int.tryParse(user["id"].toString()) ?? 0);
           await prefs.setString("name", user["name"] ?? "");
           await prefs.setString("email", user["email"] ?? "");
           await prefs.setString("role", user["role"] ?? "");
@@ -77,15 +74,13 @@ class _LoginState extends State<Login> {
       } else {
         final message = (response is Map ? response["message"] : null) ?? "Email atau kata sandi salah";
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString())));
+          AppDialog.showError(context, message.toString());
         }
       }
     } catch (e) {
       debugPrint("Error login guru: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal terhubung ke server\n$e")),
-        );
+        AppDialog.showError(context, "Gagal terhubung ke server\n$e");
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

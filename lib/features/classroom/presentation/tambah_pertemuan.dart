@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/features/classroom/presentation/hapus_pertemuan.dart';
 import 'package:guru/features/classroom/presentation/menambah_pertemuan.dart';
 import 'package:guru/features/classroom/presentation/detail_pertemuan.dart';
@@ -22,19 +23,26 @@ class _TambahPertemuanState extends State<TambahPertemuan> {
   final MeetingRepository _meetingRepository = MeetingRepository();
 
   Future<void> _deleteMeeting(int meetingId) async {
+    final confirm = await AppDialog.showConfirm(
+      context,
+      title: 'Konfirmasi Hapus',
+      message: 'Apakah Anda yakin ingin menghapus pertemuan ini?',
+      confirmText: 'Ya, Hapus',
+      cancelText: 'Batal',
+      confirmColor: Colors.red,
+    );
+
+    if (!confirm) return;
+
     try {
       await _meetingRepository.deleteMeeting(meetingId);
       if (mounted) {
         setState(() {});
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Pertemuan berhasil dihapus")),
-        );
+        AppDialog.showSuccess(context, "Pertemuan berhasil dihapus");
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal menghapus pertemuan: $e")),
-        );
+        AppDialog.showError(context, "Gagal menghapus pertemuan: $e");
       }
     }
   }

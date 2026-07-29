@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/features/classroom/data/class_repository.dart';
 import 'package:guru/features/classroom/presentation/detail_pertemuan.dart';
 import 'package:guru/features/classroom/presentation/daftarmurid.dart';
@@ -42,9 +43,7 @@ class _CariKelasState extends State<CariKelas> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal memuat kelas: $e")),
-        );
+        AppDialog.showError(context, "Gagal memuat kelas: $e");
       }
     }
   }

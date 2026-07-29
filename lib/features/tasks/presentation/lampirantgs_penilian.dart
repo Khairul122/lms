@@ -241,6 +241,10 @@ class _LampiranTgsPenilianState extends State<LampiranTgsPenilian> {
                   : (data['file_url'] != null
                       ? Image.network(
                           data['file_url'],
+                          headers: const {
+                            'localtonet-skip-warning': 'true',
+                            'ngrok-skip-browser-warning': 'true',
+                          },
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return const Center(child: Icon(Icons.image, size: 50, color: Color(0xFF1A237E)));

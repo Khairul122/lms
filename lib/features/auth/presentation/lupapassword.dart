@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/features/auth/presentation/aturulangpassword.dart';
 import 'package:guru/services/api_service.dart';
 
@@ -22,9 +23,7 @@ class _LupaPasswordState extends State<LupaPassword> {
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Masukkan email Anda terlebih dahulu!'), backgroundColor: Colors.orange),
-      );
+      AppDialog.showError(context, 'Masukkan email Anda terlebih dahulu!');
       return;
     }
 
@@ -42,12 +41,12 @@ class _LupaPasswordState extends State<LupaPassword> {
       } else {
         final message = (response is Map ? response["message"] : null) ?? "Gagal mengirim email reset.";
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString()), backgroundColor: Colors.red));
+          AppDialog.showError(context, message.toString());
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        AppDialog.showError(context, 'Error: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

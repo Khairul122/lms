@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/features/auth/presentation/login.dart';
 import 'package:guru/services/api_service.dart';
 
@@ -280,12 +281,12 @@ class _DaftarState extends State<Daftar> {
     final String confirmPassword = _confirmPasswordController.text.trim();
 
     if (name.isEmpty || username.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nama, Username, Email, dan Sandi harus diisi')));
+      AppDialog.showError(context, 'Nama, Username, Email, dan Sandi harus diisi');
       return;
     }
 
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Konfirmasi kata sandi tidak cocok')));
+      AppDialog.showError(context, 'Konfirmasi kata sandi tidak cocok');
       return;
     }
 
@@ -313,25 +314,13 @@ class _DaftarState extends State<Daftar> {
       }
 
       if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Berhasil'),
-            content: const Text('Akun Guru telah berhasil dibuat. Silahkan login.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Login()));
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+        await AppDialog.showSuccess(context, 'Akun Guru telah berhasil dibuat. Silahkan login.');
+        if (mounted) {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Login()));
+        }
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      if (mounted) AppDialog.showError(context, e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

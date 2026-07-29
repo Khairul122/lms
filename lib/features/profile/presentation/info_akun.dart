@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guru/features/profile/data/profile_repository.dart';
 import 'package:guru/features/auth/presentation/ubah_sandi.dart';
 
@@ -31,26 +33,26 @@ Future<void> _saveProfile() async {
   setState(() => _isEditing = false);
 
   try {
-    await _repository.updateProfile({
-      "name": _namaController.text,
-      "phone": _teleponController.text,
-      "nip": _nikController.text,
-      "alamat": _alamatController.text,
+    final updatedUser = await _repository.updateProfile({
+      "name": _namaController.text.trim(),
+      "phone": _teleponController.text.trim(),
+      "nip": _nikController.text.trim(),
+      "alamat": _alamatController.text.trim(),
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Profil berhasil diperbarui"),
-      ),
-    );
+    final prefs = await SharedPreferences.getInstance();
+    if (updatedUser.containsKey('name')) await prefs.setString("name", updatedUser['name'].toString());
+    if (updatedUser.containsKey('phone')) await prefs.setString("phone", updatedUser['phone'].toString());
+    if (updatedUser.containsKey('nip')) await prefs.setString("nip", updatedUser['nip'].toString());
 
-    setState(() {});
+    if (mounted) {
+      await AppDialog.showSuccess(context, "Profil berhasil diperbarui");
+      if (mounted) setState(() {});
+    }
   } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(e.toString()),
-      ),
-    );
+    if (mounted) {
+      AppDialog.showError(context, "Gagal memperbarui profil: $e");
+    }
   }
 }
 

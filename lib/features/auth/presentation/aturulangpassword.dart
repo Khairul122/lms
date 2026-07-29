@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/features/auth/presentation/login.dart';
 import 'package:guru/services/api_service.dart';
 
@@ -33,12 +34,12 @@ class _AturUlangPasswordState extends State<AturUlangPassword> {
     final confirmPassword = _confirmPasswordController.text.trim();
 
     if (token.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Semua field harus diisi'), backgroundColor: Colors.orange));
+      AppDialog.showError(context, 'Semua field harus diisi');
       return;
     }
 
     if (newPassword != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kata sandi tidak cocok'), backgroundColor: Colors.red));
+      AppDialog.showError(context, 'Kata sandi tidak cocok');
       return;
     }
 
@@ -58,11 +59,11 @@ class _AturUlangPasswordState extends State<AturUlangPassword> {
       } else {
         final message = (response is Map ? response["message"] : null) ?? "Gagal mengubah sandi.";
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString()), backgroundColor: Colors.red));
+          AppDialog.showError(context, message.toString());
         }
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      if (mounted) AppDialog.showError(context, 'Error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

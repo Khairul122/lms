@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
 
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/services/api_service.dart';
 import 'package:guru/features/classroom/presentation/buatkelas.dart';
 import 'package:guru/features/onboarding/presentation/halamanutama.dart';
@@ -37,11 +38,7 @@ Future<void> _createClass() async {
       _mataPelajaranController.text.isEmpty ||
       _kelasController.text.isEmpty) {
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Harap isi semua field"),
-      ),
-    );
+    AppDialog.showError(context, "Harap isi semua field");
     return;
   }
 
@@ -80,11 +77,7 @@ Future<void> _createClass() async {
       _isLoading = false;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(e.toString()),
-      ),
-    );
+    AppDialog.showError(context, e.toString());
 
   }
 

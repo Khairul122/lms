@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:guru/services/api_service.dart';
@@ -69,9 +70,7 @@ class _TambahMateriDinamisState extends State<TambahMateriDinamis> {
   /// PROSES SIMPAN MATERI KE LARAVEL REST API
   Future<void> _saveMateri() async {
     if (_judulController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Harap isi judul materi')),
-      );
+      AppDialog.showError(context, 'Harap isi judul materi');
       return;
     }
 
@@ -97,24 +96,18 @@ class _TambahMateriDinamisState extends State<TambahMateriDinamis> {
 
       if (response != null && (response['success'] == true || response['data'] != null)) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Materi berhasil diunggah!')),
-          );
-          Navigator.pop(context, true); // Kembali & trigger refresh data
+          await AppDialog.showSuccess(context, 'Materi berhasil diunggah!');
+          if (mounted) Navigator.pop(context, true);
         }
       } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(response?['message'] ?? 'Gagal menyimpan materi ke server')),
-          );
+          AppDialog.showError(context, response?['message'] ?? 'Gagal menyimpan materi ke server');
         }
       }
     } catch (e) {
       debugPrint("❌ Error Save Materi: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal menyimpan: $e')),
-        );
+        AppDialog.showError(context, 'Gagal menyimpan: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/features/tasks/data/task_repository.dart';
 
 class TambahTugasDinamis extends StatefulWidget {
@@ -42,9 +43,7 @@ class _TambahTugasDinamisState extends State<TambahTugasDinamis> {
 
   Future<void> _saveTugas() async {
     if (_judulController.text.isEmpty || _deadlineController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Harap isi judul dan deadline tugas')),
-      );
+      AppDialog.showError(context, 'Harap isi judul dan deadline tugas');
       return;
     }
 
@@ -67,17 +66,13 @@ class _TambahTugasDinamisState extends State<TambahTugasDinamis> {
 
       if (!mounted) return;
 
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tugas berhasil disimpan')),
-      );
+      await AppDialog.showSuccess(context, 'Tugas berhasil disimpan');
+      if (mounted) Navigator.pop(context);
     } catch (e) {
       debugPrint("Error POST Task: $e");
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal menyimpan: $e')),
-      );
+      AppDialog.showError(context, 'Gagal menyimpan: $e');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/features/discussions/data/discussion_repository.dart';
 
 class TambahKomentar extends StatefulWidget {
@@ -44,9 +45,7 @@ class _TambahKomentarState extends State<TambahKomentar> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+        AppDialog.showError(context, e.toString());
       }
     }
   }

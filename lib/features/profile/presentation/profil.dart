@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guru/features/profile/data/profile_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:guru/services/api_service.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/core/widgets/bottom_nav_bar.dart';
 import 'package:guru/app_navigation.dart';
 import 'package:guru/features/auth/presentation/login.dart';
@@ -20,6 +22,17 @@ class _ProfilState extends State<Profil> {
   bool _isUploading = false;
 
   Future<void> _logout() async {
+    final confirm = await AppDialog.showConfirm(
+      context,
+      title: 'Konfirmasi Logout',
+      message: 'Apakah Anda yakin ingin keluar dari akun ini?',
+      confirmText: 'Ya, Keluar',
+      cancelText: 'Batal',
+      confirmColor: Colors.red,
+    );
+
+    if (!confirm) return;
+
     try {
       await ApiService.post("/logout", {});
     } catch (_) {
@@ -45,7 +58,7 @@ class _ProfilState extends State<Profil> {
 
   Future<void> _pickAndUploadImage() async {
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
     
     if (pickedFile != null) {
       setState(() {
@@ -53,9 +66,19 @@ class _ProfilState extends State<Profil> {
       });
       
       try {
-        // Implementasi upload foto jika diperlukan
+        final bytes = await pickedFile.readAsBytes();
+        final String base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+        
+        await _repository.updatePhoto(base64Image);
+
+        if (mounted) {
+          await AppDialog.showSuccess(context, 'Foto profil berhasil diperbarui');
+        }
       } catch (e) {
         debugPrint("Upload failed: $e");
+        if (mounted) {
+          AppDialog.showError(context, 'Gagal memperbarui foto: $e');
+        }
       } finally {
         if (mounted) {
           setState(() {
@@ -170,11 +193,21 @@ class _ProfilState extends State<Profil> {
                                         child: CircularProgressIndicator(color: Colors.white),
                                       )
                                     : (photoUrl != null
-                                        ? Image.network(
-                                            photoUrl,
-                                            fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
-                                          )
+                                        ? (photoUrl.startsWith('data:image')
+                                            ? Image.memory(
+                                                base64Decode(photoUrl.split(',').last),
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
+                                              )
+                                            : Image.network(
+                                                photoUrl,
+                                                headers: const {
+                                                  'localtonet-skip-warning': 'true',
+                                                  'ngrok-skip-browser-warning': 'true',
+                                                },
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
+                                              ))
                                         : _buildDefaultAvatar()),
                               ),
                             ),

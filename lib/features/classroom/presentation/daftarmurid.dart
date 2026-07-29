@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/features/classroom/data/class_repository.dart';
 
 class DaftarMurid extends StatefulWidget {
@@ -81,9 +82,7 @@ class _DaftarMuridState extends State<DaftarMurid> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal memuat data anggota: $e")),
-        );
+        AppDialog.showError(context, "Gagal memuat data anggota: $e");
       }
     }
   }
