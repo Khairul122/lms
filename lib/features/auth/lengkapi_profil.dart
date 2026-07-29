@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:lms/features/onboarding/homepage.dart';
-import 'package:lms/notification_service.dart';
+import 'package:lms/core/services/notification_service.dart';
 
 class LengkapProfilScreen extends StatefulWidget {
   final String nama;

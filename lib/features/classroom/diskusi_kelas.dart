@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
-import 'package:lms/fcm_service.dart';
+import 'package:lms/core/services/fcm_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class DiskusiKelasScreen extends StatefulWidget {

@@ -7,7 +7,7 @@ import 'package:lms/features/profile/profil.dart';
 import 'package:lms/features/notifications/notifikasi.dart';
 import 'package:lms/features/classroom/detail_kelas.dart';
 import 'package:lms/features/classroom/carikelas.dart';
-import 'package:lms/notification_service.dart';
+import 'package:lms/core/services/notification_service.dart';
 import 'dart:convert';
 
 class homepage extends StatefulWidget {

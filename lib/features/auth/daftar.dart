@@ -4,7 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
 import 'package:lms/features/auth/login.dart';
-import 'package:lms/notification_service.dart';
+import 'package:lms/core/services/notification_service.dart';
 import 'package:lms/features/onboarding/homepage.dart';
 
 class DaftarScreen extends StatefulWidget {
