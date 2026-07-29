@@ -39,45 +39,27 @@ Future<void> _simpanPertemuan() async {
   });
 
   try {
-
     await _meetingRepository.createMeeting(
-
       classCode: widget.classCode,
-
       namaPertemuan: _namaController.text.trim(),
-
       temaPertemuan: _temaController.text.trim(),
-
     );
 
     if (mounted) {
-
       await AppDialog.showSuccess(context, "Pertemuan berhasil ditambahkan");
-
       if (mounted) Navigator.pop(context);
-
     }
-
   } catch (e) {
-
-    AppDialog.showError(context, e.toString());
-
-      SnackBar(
-
-        content: Text(e.toString()),
-
-      ),
-
-    );
-
+    if (mounted) {
+      AppDialog.showError(context, e.toString());
+    }
+  } finally {
+    if (mounted) {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
-
-  setState(() {
-
-    _isLoading = false;
-
-  });
-
 }
   @override
   Widget build(BuildContext context) {
