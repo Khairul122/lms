@@ -1,16 +1,20 @@
 class ApiConfig {
+  // 🔥 BASE URL BACKEND LARAVEL (Dapat disesuaikan ke HTTP/HTTPS & IP/Domain / LocalToNet)
   static String customBaseUrl = '';
 
   static String get baseUrl {
     if (customBaseUrl.isNotEmpty) return customBaseUrl;
-    return 'http://192.168.18.125:8000/api';
+    // Default URL (Fallback ke LocalToNet Tunnel HTTPS)
+    return 'https://xbncmdd6jn.localto.net/api';
   }
 
   static String get rootUrl => baseUrl.replaceAll('/api', '');
 
+  // Header dasar request
   static Map<String, String> get headers => {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "ngrok-skip-browser-warning": "true",
+        "localtonet-skip-browser-warning": "true",
       };
 }
