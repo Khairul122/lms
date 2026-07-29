@@ -197,7 +197,7 @@ return [
     'classes_content' => '',
     'classes_sidebar' => 'sidebar-dark-indigo elevation-4',
     'classes_sidebar_nav' => '',
-    'classes_topnav' => 'navbar-dark bg-primary',
+    'classes_topnav' => 'navbar-dark bg-indigo',
     'classes_topnav_nav' => 'navbar-expand',
     'classes_topnav_container' => 'container',
 

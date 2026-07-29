@@ -20,6 +20,11 @@ return new class extends Migration
                 ->constrained('users')
                 ->cascadeOnDelete();
 
+            $table->foreignId('meeting_id')
+                ->nullable()
+                ->constrained('meetings')
+                ->nullOnDelete();
+
             $table->text('message');
 
             $table->timestamps();

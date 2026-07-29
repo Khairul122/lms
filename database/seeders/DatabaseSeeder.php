@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             AdminSeeder::class,
             GuruSeeder::class,
             SiswaSeeder::class,
+            LmsDataSeeder::class,
         ]);
     }
 }
