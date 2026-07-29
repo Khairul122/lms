@@ -170,32 +170,54 @@
 @endsection
 
 @section('js')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <script>
-const ctx = document.getElementById('dashboardChart');
-new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: ['Guru', 'Siswa', 'Kelas', 'Pertemuan', 'Materi', 'Tugas', 'Submission'],
-        datasets: [{
-            label: 'Jumlah Data',
-            data: [{{ $guru }}, {{ $siswa }}, {{ $kelas }}, {{ $meeting }}, {{ $materi }}, {{ $tugas }}, {{ $submission }}],
-            backgroundColor: [
-                '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#2563EB', '#9333EA', '#059669'
-            ],
-            borderRadius: 8,
-            borderSkipped: false,
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false }
-        },
-        scales: {
-            y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
-            x: { grid: { display: false } }
+(function renderDashboardChart() {
+    let attempts = 0;
+    function initChart() {
+        const ctx = document.getElementById('dashboardChart');
+        if (!ctx) return;
+
+        if (typeof Chart === 'undefined') {
+            attempts++;
+            if (attempts < 50) {
+                setTimeout(initChart, 100);
+            }
+            return;
         }
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Guru', 'Siswa', 'Kelas', 'Pertemuan', 'Materi', 'Tugas', 'Submission'],
+                datasets: [{
+                    label: 'Jumlah Data',
+                    data: [{{ $guru }}, {{ $siswa }}, {{ $kelas }}, {{ $meeting }}, {{ $materi }}, {{ $tugas }}, {{ $submission }}],
+                    backgroundColor: [
+                        '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#2563EB', '#9333EA', '#059669'
+                    ],
+                    borderRadius: 8,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [4, 4] } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
     }
-});
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        initChart();
+    } else {
+        document.addEventListener("DOMContentLoaded", initChart);
+    }
+})();
 </script>
 @endsection

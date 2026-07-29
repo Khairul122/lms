@@ -46,6 +46,7 @@ if ($zip->open($zipPath) === TRUE) {
     $artisanPath = $baseDir . '/artisan';
     if (file_exists($artisanPath)) {
         @exec("php {$artisanPath} storage:link");
+        @exec("php {$artisanPath} view:clear");
         @exec("php {$artisanPath} config:clear");
         @exec("php {$artisanPath} cache:clear");
         @exec("php {$artisanPath} route:cache");
