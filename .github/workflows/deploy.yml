@@ -50,18 +50,19 @@ jobs:
           port: ${{ secrets.FTP_PORT }}
           server-dir: public_html/backend-lms/
           exclude: |
-            **/.git**
-            **/.git/**
-            **/.github/**
-            **/node_modules/**
-            **/tests/**
-            **/.env**
-            **/.env.example**
-            /vendor/**
-            **/storage/logs/*.log**
-            **/README.md**
-            **/CHANGELOG.md**
-            **/phpunit.xml**
+            .git**
+            .git/**
+            .github/**
+            node_modules/**
+            tests/**
+            .env
+            .env.example
+            vendor/**
+            !public/vendor/**
+            storage/logs/*.log
+            README.md
+            CHANGELOG.md
+            phpunit.xml
 
       - name: ⚡ 6. Execute Auto-Extract Hook on Server
         run: |
