@@ -42,9 +42,10 @@ if ($zip->open($zipPath) === TRUE) {
     // 4. Hapus vendor.zip Setelah Selesai
     unlink($zipPath);
 
-    // 5. Jalankan Perintah Clear Cache Laravel (Jika Artisan Tersedia)
+    // 5. Jalankan Perintah Clear Cache & Storage Link Laravel (Jika Artisan Tersedia)
     $artisanPath = $baseDir . '/artisan';
     if (file_exists($artisanPath)) {
+        @exec("php {$artisanPath} storage:link");
         @exec("php {$artisanPath} config:clear");
         @exec("php {$artisanPath} cache:clear");
         @exec("php {$artisanPath} route:cache");

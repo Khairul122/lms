@@ -27,11 +27,21 @@ jobs:
         run: |
           composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
 
-      - name: 🗜️ 4. Compress Vendor Directory to vendor.zip
+      - name: 🟢 4. Setup Node.js Environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 🛠️ 5. Build Vite Assets for Production
+        run: |
+          npm ci
+          npm run build
+
+      - name: 🗜️ 6. Compress Vendor Directory to vendor.zip
         run: |
           zip -r vendor.zip vendor/
 
-      - name: 📤 5. Sync Project via FTP to Server
+      - name: 📤 7. Sync Project via FTP to Server
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
