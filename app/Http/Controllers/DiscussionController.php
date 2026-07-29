@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Discussion;
+use App\Actions\Discussion\DeleteDiscussionAction;
+use App\Actions\Discussion\PostDiscussionAction;
+use App\Actions\Discussion\UpdateDiscussionAction;
 use App\Models\ClassRoom;
+use App\Models\Discussion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,7 +14,6 @@ class DiscussionController extends Controller
 {
     public function index()
     {
-        // Tambahkan relasi 'meeting' ke dalam array with agar ikut ter-load secara efisien
         $discussions = Discussion::with(['classroom', 'user', 'meeting'])
             ->latest()
             ->paginate(10);
@@ -26,22 +28,22 @@ class DiscussionController extends Controller
         return view('discussions.create', compact('classes'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, PostDiscussionAction $action)
     {
         $request->validate([
             'class_id' => 'required|exists:class_rooms,id',
-            'message' => 'required|string',
+            'message'  => 'required|string',
         ]);
 
-        Discussion::create([
+        $action->execute([
             'class_id' => $request->class_id,
-            'user_id' => Auth::id(),
-            'message' => $request->message,
+            'user_id'  => Auth::id(),
+            'message'  => $request->message,
         ]);
 
         return redirect()
             ->route('discussions.index')
-            ->with('success','Diskusi berhasil ditambahkan.');
+            ->with('success', 'Diskusi berhasil ditambahkan.');
     }
 
     public function show(Discussion $discussion)
@@ -53,30 +55,30 @@ class DiscussionController extends Controller
     {
         $classes = ClassRoom::all();
 
-        return view('discussions.edit', compact('discussion','classes'));
+        return view('discussions.edit', compact('discussion', 'classes'));
     }
 
-    public function update(Request $request, Discussion $discussion)
+    public function update(Request $request, Discussion $discussion, UpdateDiscussionAction $action)
     {
         $request->validate([
             'class_id' => 'required|exists:class_rooms,id',
-            'message' => 'required|string',
+            'message'  => 'required|string',
         ]);
 
-        $discussion->update([
+        $action->execute($discussion, [
             'class_id' => $request->class_id,
-            'message' => $request->message,
+            'message'  => $request->message,
         ]);
 
         return redirect()
             ->route('discussions.index')
-            ->with('success','Diskusi berhasil diperbarui.');
+            ->with('success', 'Diskusi berhasil diperbarui.');
     }
 
-    public function destroy(Discussion $discussion)
+    public function destroy(Discussion $discussion, DeleteDiscussionAction $action)
     {
-        $discussion->delete();
+        $action->execute($discussion);
 
-        return back()->with('success','Diskusi berhasil dihapus.');
+        return back()->with('success', 'Diskusi berhasil dihapus.');
     }
 }

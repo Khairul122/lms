@@ -2,97 +2,75 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Discussion\DeleteDiscussionAction;
+use App\Actions\Discussion\PostDiscussionAction;
+use App\Actions\Discussion\UpdateDiscussionAction;
 use App\Http\Controllers\Controller;
-use App\Models\Classroom;
+use App\Http\Resources\DiscussionResource;
 use App\Models\Discussion;
+use App\Services\DiscussionService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
-
 
 class DiscussionController extends Controller
 {
+    use ApiResponse;
+
+    public function __construct(protected DiscussionService $discussionService)
+    {
+    }
+
     public function index(Request $request)
-{
-    $query = Discussion::with(['classroom','user']);
+    {
+        $discussions = $this->discussionService->listForApi($request->only(['class_code']));
 
-    if ($request->filled('class_code')) {
+        return $this->success(DiscussionResource::collection($discussions));
+    }
 
-        $classroom = Classroom::where(
-            'class_code',
-            $request->class_code
-        )->first();
+    public function store(Request $request, PostDiscussionAction $action)
+    {
+        $request->validate([
+            'class_code' => 'required|string',
+            'message'    => 'required|string',
+        ]);
 
-        if ($classroom) {
+        $classroom = $this->discussionService->findClassByCode($request->class_code);
 
-            $query->where(
-                'class_id',
-                $classroom->id
-            );
-
+        if (!$classroom) {
+            return $this->notFound('Kelas tidak ditemukan.');
         }
 
+        $discussion = $action->execute([
+            'class_id' => $classroom->id,
+            'user_id'  => auth()->id(),
+            'message'  => $request->message,
+        ]);
+
+        return $this->success($discussion, 'Diskusi berhasil ditambahkan.');
     }
 
-    $discussions = $query
-        ->latest()
-        ->get()
-        ->map(function ($discussion){
+    public function show(Discussion $discussion)
+    {
+        $discussion->load(['classroom', 'user']);
 
-            return [
-
-                'id'=>$discussion->id,
-
-                'class_code'=>optional($discussion->classroom)->class_code,
-
-                'class_name'=>optional($discussion->classroom)->class_name,
-
-                'user_name'=>optional($discussion->user)->name,
-
-                'message'=>$discussion->message,
-
-                'created_at'=>$discussion->created_at,
-
-            ];
-
-        });
-
-    return response()->json([
-
-        'success'=>true,
-
-        'data'=>$discussions,
-
-    ]);
-}
-
-public function store(Request $request)
-{
-    $request->validate([
-        'class_code' => 'required|string',
-        'message' => 'required|string',
-    ]);
-
-    $classroom = Classroom::where(
-        'class_code',
-        $request->class_code
-    )->first();
-
-    if (!$classroom) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Kelas tidak ditemukan.'
-        ], 404);
+        return $this->success(new DiscussionResource($discussion));
     }
 
-    $discussion = Discussion::create([
-        'class_id' => $classroom->id,
-        'user_id' => auth()->id(),
-        'message' => $request->message,
-    ]);
+    public function update(Request $request, Discussion $discussion, UpdateDiscussionAction $action)
+    {
+        $request->validate([
+            'message' => 'required|string',
+        ]);
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Diskusi berhasil ditambahkan.',
-        'data' => $discussion,
-    ]);
-}
+        $discussion = $action->execute($discussion, ['message' => $request->message]);
+
+        return $this->success($discussion, 'Diskusi berhasil diperbarui.');
+    }
+
+    public function destroy(Discussion $discussion, DeleteDiscussionAction $action)
+    {
+        $action->execute($discussion);
+
+        return $this->success(null, 'Diskusi berhasil dihapus.');
+    }
 }
