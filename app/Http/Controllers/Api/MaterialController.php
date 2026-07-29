@@ -2,82 +2,38 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Material\CreateMaterialAction;
+use App\Actions\Material\DeleteMaterialAction;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MaterialResource;
 use App\Models\Material;
-use App\Models\ClassRoom;
-use App\Models\Meeting;
+use App\Services\MaterialService;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class MaterialController extends Controller
 {
+    use ApiResponse;
+
+    public function __construct(protected MaterialService $materialService)
+    {
+    }
+
     /**
      * Daftar materi (dengan filter class_code & pertemuan dari Flutter)
      */
     public function index(Request $request)
     {
-        $query = Material::with(['classroom', 'meeting']);
+        $materials = $this->materialService->listForApi($request->only(['class_code', 'pertemuan']));
 
-        // Filter jika dikirim query param dari Flutter
-        if ($request->has('class_code')) {
-            $class = ClassRoom::where('class_code', $request->class_code)->first();
-
-            if ($class) {
-                $query->where('class_id', $class->id);
-
-                if ($request->has('pertemuan')) {
-                    $meeting = Meeting::where('class_id', $class->id)
-                        ->where('pertemuan', $request->pertemuan)
-                        ->first();
-
-                    if ($meeting) {
-                        $query->where('meeting_id', $meeting->id);
-                    } else {
-                        return response()->json([
-                            'success' => true,
-                            'message' => 'Data materi berhasil diambil.',
-                            'data' => [],
-                        ]);
-                    }
-                }
-            } else {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Data materi berhasil diambil.',
-                    'data' => [],
-                ]);
-            }
-        }
-
-        $materials = $query->latest()
-            ->get()
-            ->map(function ($material) {
-                return [
-                    'id' => $material->id,
-                    'class_id' => $material->class_id,
-                    'class_name' => optional($material->classroom)->class_name,
-                    'meeting_id' => $material->meeting_id,
-                    'meeting_name' => optional($material->meeting)->nama_pertemuan,
-                    'pertemuan' => $material->pertemuan,
-                    'title' => $material->title,
-                    'description' => $material->description,
-                    'file_url' => $material->file_url,
-                    'youtube_url' => $material->youtube_url,
-                    'created_at' => $material->created_at,
-                ];
-            });
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Data materi berhasil diambil.',
-            'data' => $materials,
-        ]);
+        return $this->success(MaterialResource::collection($materials), 'Data materi berhasil diambil.');
     }
 
     /**
      * Simpan materi baru dari Flutter / Web Admin
      */
-    public function store(Request $request)
+    public function store(Request $request, CreateMaterialAction $action)
     {
         $validator = Validator::make($request->all(), [
             'class_code'     => 'required|string',
@@ -89,53 +45,28 @@ class MaterialController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validasi gagal',
-                'errors'  => $validator->errors()
-            ], 422);
+            return $this->error('Validasi gagal', 422, $validator->errors());
         }
 
-        try {
-            // Cari kelas berdasarkan class_code
-            $class = ClassRoom::where('class_code', $request->class_code)->first();
+        $class = $this->materialService->findClassByCode($request->class_code);
 
-            if (!$class) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Kelas tidak ditemukan.'
-                ], 404);
-            }
-
-            // Cari meeting berdasarkan class_id dan pertemuan
-            $meeting = Meeting::where('class_id', $class->id)
-                ->where('pertemuan', $request->meeting_number)
-                ->first();
-
-            // Simpan data materi
-            $material = Material::create([
-                'class_id'    => $class->id,
-                'meeting_id'  => $meeting ? $meeting->id : null,
-                'pertemuan'   => $request->meeting_number,
-                'title'       => $request->title,
-                'description' => $request->description,
-                'file_url'    => $request->file_url,
-                'youtube_url' => $request->youtube_url,
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Materi berhasil disimpan',
-                'data'    => $material
-            ], 201);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menyimpan materi',
-                'error'   => $e->getMessage()
-            ], 500);
+        if (!$class) {
+            return $this->notFound('Kelas tidak ditemukan.');
         }
+
+        $meeting = $this->materialService->findMeetingByNumber($class->id, (int) $request->meeting_number);
+
+        $material = $action->execute([
+            'class_id'    => $class->id,
+            'meeting_id'  => $meeting?->id,
+            'pertemuan'   => $request->meeting_number,
+            'title'       => $request->title,
+            'description' => $request->description,
+            'file_url'    => $request->file_url,
+            'youtube_url' => $request->youtube_url,
+        ]);
+
+        return $this->created($material, 'Materi berhasil disimpan');
     }
 
     /**
@@ -145,52 +76,16 @@ class MaterialController extends Controller
     {
         $material->load(['classroom', 'meeting']);
 
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $material->id,
-                'class_id' => $material->class_id,
-                'class_name' => optional($material->classroom)->class_name,
-                'meeting_id' => $material->meeting_id,
-                'meeting_name' => optional($material->meeting)->nama_pertemuan,
-                'pertemuan' => $material->pertemuan,
-                'title' => $material->title,
-                'description' => $material->description,
-                'file_url' => $material->file_url,
-                'youtube_url' => $material->youtube_url,
-                'created_at' => $material->created_at,
-            ]
-        ]);
+        return $this->success(new MaterialResource($material));
     }
 
     /**
      * Hapus materi
      */
-    public function destroy($id)
+    public function destroy(Material $material, DeleteMaterialAction $action)
     {
-        try {
-            $material = Material::find($id);
+        $action->execute($material);
 
-            if (!$material) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Materi tidak ditemukan'
-                ], 404);
-            }
-
-            $material->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Materi berhasil dihapus'
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menghapus materi',
-                'error'   => $e->getMessage()
-            ], 500);
-        }
+        return $this->success(null, 'Materi berhasil dihapus');
     }
 }

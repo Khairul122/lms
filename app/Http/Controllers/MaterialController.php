@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Material;
+use App\Actions\Material\CreateMaterialAction;
+use App\Actions\Material\DeleteMaterialAction;
+use App\Actions\Material\UpdateMaterialAction;
 use App\Models\ClassRoom;
+use App\Models\Material;
 use App\Models\Meeting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class MaterialController extends Controller
 {
     public function index()
     {
-        $materials = Material::with(['classroom','meeting'])
+        $materials = Material::with(['classroom', 'meeting'])
             ->latest()
             ->paginate(10);
 
@@ -24,42 +26,37 @@ class MaterialController extends Controller
         $classes = ClassRoom::orderBy('class_name')->get();
         $meetings = Meeting::orderBy('pertemuan')->get();
 
-        return view('materials.create', compact(
-            'classes',
-            'meetings'
-        ));
+        return view('materials.create', compact('classes', 'meetings'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request, CreateMaterialAction $action)
     {
         $request->validate([
-            'class_id'=>'required',
-            'meeting_id'=>'required',
-            'title'=>'required',
-            'file'=>'nullable|file|max:20480',
-            'youtube_url'=>'nullable|url'
+            'class_id'    => 'required',
+            'meeting_id'  => 'required',
+            'title'       => 'required',
+            'file'        => 'nullable|file|max:20480',
+            'youtube_url' => 'nullable|url',
         ]);
 
-        $file = null;
-
-        if($request->hasFile('file')){
-            $file = $request->file('file')
-                    ->store('materials','public');
+        $fileUrl = null;
+        if ($request->hasFile('file')) {
+            $fileUrl = $request->file('file')->store('materials', 'public');
         }
 
-        Material::create([
-            'class_id'=>$request->class_id,
-            'meeting_id'=>$request->meeting_id,
-            'pertemuan'=>$request->pertemuan,
-            'title'=>$request->title,
-            'description'=>$request->description,
-            'file_url'=>$file,
-            'youtube_url'=>$request->youtube_url,
+        $action->execute([
+            'class_id'    => $request->class_id,
+            'meeting_id'  => $request->meeting_id,
+            'pertemuan'   => $request->pertemuan,
+            'title'       => $request->title,
+            'description' => $request->description,
+            'file_url'    => $fileUrl,
+            'youtube_url' => $request->youtube_url,
         ]);
 
         return redirect()
             ->route('materials.index')
-            ->with('success','Materi berhasil ditambahkan');
+            ->with('success', 'Materi berhasil ditambahkan');
     }
 
     public function show(Material $material)
@@ -72,50 +69,35 @@ class MaterialController extends Controller
         $classes = ClassRoom::all();
         $meetings = Meeting::all();
 
-        return view('materials.edit', compact(
-            'material',
-            'classes',
-            'meetings'
-        ));
+        return view('materials.edit', compact('material', 'classes', 'meetings'));
     }
 
-    public function update(Request $request, Material $material)
+    public function update(Request $request, Material $material, UpdateMaterialAction $action)
     {
-        if($request->hasFile('file')){
-
-            if($material->file_url){
-                Storage::disk('public')
-                    ->delete($material->file_url);
-            }
-
-            $material->file_url = $request->file('file')
-                    ->store('materials','public');
+        $newFilePath = null;
+        if ($request->hasFile('file')) {
+            $newFilePath = $request->file('file')->store('materials', 'public');
         }
 
-        $material->update([
-            'class_id'=>$request->class_id,
-            'meeting_id'=>$request->meeting_id,
-            'pertemuan'=>$request->pertemuan,
-            'title'=>$request->title,
-            'description'=>$request->description,
-            'youtube_url'=>$request->youtube_url,
-            'file_url'=>$material->file_url
+        $action->execute($material, [
+            'class_id'      => $request->class_id,
+            'meeting_id'    => $request->meeting_id,
+            'pertemuan'     => $request->pertemuan,
+            'title'         => $request->title,
+            'description'   => $request->description,
+            'youtube_url'   => $request->youtube_url,
+            'new_file_path' => $newFilePath,
         ]);
 
         return redirect()
             ->route('materials.index')
-            ->with('success','Materi berhasil diupdate');
+            ->with('success', 'Materi berhasil diupdate');
     }
 
-    public function destroy(Material $material)
+    public function destroy(Material $material, DeleteMaterialAction $action)
     {
-        if($material->file_url){
-            Storage::disk('public')
-                ->delete($material->file_url);
-        }
+        $action->execute($material);
 
-        $material->delete();
-
-        return back()->with('success','Materi berhasil dihapus');
+        return back()->with('success', 'Materi berhasil dihapus');
     }
 }
