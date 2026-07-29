@@ -5,6 +5,7 @@ namespace App\Actions\Auth;
 use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\Hash;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class LoginUserAction
 {
@@ -19,9 +20,7 @@ class LoginUserAction
             throw new Exception('Email atau password salah.', 401);
         }
 
-        $user->tokens()->delete();
-
-        $token = $user->createToken('edusmart-mobile')->plainTextToken;
+        $token = JWTAuth::fromUser($user);
 
         return ['user' => $user, 'token' => $token];
     }

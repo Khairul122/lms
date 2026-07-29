@@ -54,7 +54,7 @@
                 <div class="card-body p-4 d-flex align-items-center justify-content-between">
                     <div>
                         <span class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.05em;">REST API Service</span>
-                        <h2 class="h3 fw-bold mb-0 text-dark mt-1">Terhubung (Sanctum)</h2>
+                        <h2 class="h3 fw-bold mb-0 text-dark mt-1">Terhubung (JWT)</h2>
                     </div>
                     <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 56px; height: 56px; background: #EEF2FF; color: #4F46E5;">
                         <i class="fas fa-network-wired fa-2x"></i>

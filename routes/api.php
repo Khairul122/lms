@@ -11,28 +11,29 @@ use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\SubmissionController;
 use App\Http\Controllers\Api\DiscussionController;
 use App\Http\Controllers\Api\NotificationController;
-use App\Http\Controllers\Api\FirebaseLoginController;
 
 /*
 |--------------------------------------------------------------------------
-| PUBLIC ROUTES (Tanpa Token Sanctum)
+| PUBLIC ROUTES (Tanpa Token JWT)
 |--------------------------------------------------------------------------
 */
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
-Route::post('/firebase-login', [FirebaseLoginController::class, 'login']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 /*
 |--------------------------------------------------------------------------
-| PROTECTED API ROUTES (Wajib Menggunakan Bearer Token Sanctum)
+| PROTECTED API ROUTES (Wajib Menggunakan Bearer Token JWT)
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:api')->group(function () {
 
     // Auth & Profile
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/profile', [AuthController::class, 'profile']);
-    Route::put('/profile', [AuthController::class, 'updateProfile']); 
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);
