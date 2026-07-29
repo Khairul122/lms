@@ -101,7 +101,7 @@ class ClassController extends Controller
      */
     public function show(ClassRoom $class)
     {
-        $class->load('teacher');
+        $class->load(['teacher', 'students']);
         $class->loadCount('students');
 
         return $this->success(new ClassRoomResource($class), 'Detail kelas berhasil diambil.');
