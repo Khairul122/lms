@@ -13,7 +13,7 @@ class CreateClassroomAction
             'class_code'  => strtoupper(trim($data['class_code'])),
             'class_name'  => $data['class_name'],
             'subject'     => $data['subject'],
-            'teacher_id'  => $user->id,
+            'teacher_id'  => $data['teacher_id'] ?? $user->id,
             'description' => $data['school_name'] ?? ($data['description'] ?? null),
             'is_active'   => 1,
         ]);

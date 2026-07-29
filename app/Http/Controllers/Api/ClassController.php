@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\ClassRoomResource;
 use App\Models\ClassRoom;
 use App\Services\ClassroomService;
 use App\Actions\Classroom\CreateClassroomAction;
 use App\Actions\Classroom\JoinClassroomAction;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Exception;
 
 class ClassController extends Controller
 {
+    use ApiResponse;
+
     protected ClassroomService $classroomService;
 
     public function __construct(ClassroomService $classroomService)
@@ -28,20 +32,12 @@ class ClassController extends Controller
         $user = $request->user();
 
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated / Token tidak valid.'
-            ], 401);
+            return $this->unauthorized('Unauthenticated / Token tidak valid.');
         }
 
         $classes = $this->classroomService->getClassesForUser($user);
-        $formattedClasses = $this->classroomService->formatClassroomResponse($classes);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Data kelas berhasil diambil.',
-            'data'    => $formattedClasses,
-        ], 200);
+        return $this->success(ClassRoomResource::collection($classes), 'Data kelas berhasil diambil.');
     }
 
     /**
@@ -57,39 +53,18 @@ class ClassController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => $validator->errors()->first() ?? 'Validasi gagal.',
-                'errors'  => $validator->errors()
-            ], 422);
+            return $this->error($validator->errors()->first() ?? 'Validasi gagal.', 422, $validator->errors());
         }
 
         $user = $request->user();
 
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated / Token tidak valid.'
-            ], 401);
+            return $this->unauthorized('Unauthenticated / Token tidak valid.');
         }
 
         $class = $action->execute($user, $request->all());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Kelas baru berhasil dibuat.',
-            'data'    => [
-                'id'             => $class->id,
-                'class_code'     => $class->class_code,
-                'class_name'     => $class->class_name,
-                'subject'        => $class->subject,
-                'teacher'        => $class->teacher?->name ?? 'Pengajar',
-                'description'    => $class->description,
-                'students_count' => 0,
-                'is_active'      => $class->is_active,
-                'created_at'     => $class->created_at,
-            ]
-        ], 201);
+        return $this->created(new ClassRoomResource($class), 'Kelas baru berhasil dibuat.');
     }
 
     /**
@@ -97,49 +72,28 @@ class ClassController extends Controller
      */
     public function joinClass(Request $request, JoinClassroomAction $action)
     {
+        $validator = Validator::make($request->all(), [
+            'class_code' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors()->first('class_code') ?? 'Kode kelas wajib diisi!', 422, $validator->errors());
+        }
+
+        $user = $request->user();
+
+        if (!$user) {
+            return $this->unauthorized('Unauthenticated / Sesi login habis.');
+        }
+
         try {
-            $validator = Validator::make($request->all(), [
-                'class_code' => 'required|string',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $validator->errors()->first('class_code') ?? 'Kode kelas wajib diisi!',
-                    'errors'  => $validator->errors()
-                ], 422);
-            }
-
-            $user = $request->user();
-
-            if (!$user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthenticated / Sesi login habis.'
-                ], 401);
-            }
-
             $class = $action->execute($user, $request->class_code);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Berhasil bergabung ke kelas ' . $class->class_name,
-                'data'    => [
-                    'id'         => $class->id,
-                    'class_code' => $class->class_code,
-                    'class_name' => $class->class_name,
-                    'subject'    => $class->subject,
-                    'teacher'    => $class->teacher?->name ?? 'Pengajar',
-                ]
-            ], 200);
-
         } catch (Exception $e) {
             $code = $e->getCode() >= 400 && $e->getCode() < 600 ? $e->getCode() : 500;
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], $code);
+            return $this->error($e->getMessage(), $code);
         }
+
+        return $this->success(new ClassRoomResource($class), 'Berhasil bergabung ke kelas ' . $class->class_name);
     }
 
     /**
@@ -150,20 +104,6 @@ class ClassController extends Controller
         $class->load('teacher');
         $class->loadCount('students');
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Detail kelas berhasil diambil.',
-            'data'    => [
-                'id'             => $class->id,
-                'class_code'     => $class->class_code,
-                'class_name'     => $class->class_name,
-                'subject'        => $class->subject,
-                'teacher'        => $class->teacher?->name ?? 'Pengajar',
-                'description'    => $class->description,
-                'students_count' => $class->students_count ?? 0,
-                'is_active'      => $class->is_active,
-                'created_at'     => $class->created_at,
-            ]
-        ], 200);
+        return $this->success(new ClassRoomResource($class), 'Detail kelas berhasil diambil.');
     }
 }

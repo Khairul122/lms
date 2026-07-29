@@ -2,27 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Classroom\CreateClassroomAction;
+use App\Actions\Classroom\DeleteClassroomAction;
+use App\Actions\Classroom\UpdateClassroomAction;
 use App\Models\ClassRoom;
 use App\Models\User;
+use App\Http\Requests\ClassRoom\StoreClassRoomRequest;
+use App\Http\Requests\ClassRoom\UpdateClassRoomRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use App\Http\Requests\ClassRoomRequest;
 
 class ClassRoomController extends Controller
 {
-   public function index(Request $request)
-{
-    $classes = ClassRoom::with('teacher')
-        ->when($request->search, function ($query) use ($request) {
-            $query->where('class_name', 'like', '%' . $request->search . '%')
-                  ->orWhere('subject', 'like', '%' . $request->search . '%')
-                  ->orWhere('class_code', 'like', '%' . $request->search . '%');
-        })
-        ->latest()
-        ->paginate(10);
+    public function index(Request $request)
+    {
+        $classes = ClassRoom::with('teacher')
+            ->when($request->search, function ($query) use ($request) {
+                $query->where('class_name', 'like', '%' . $request->search . '%')
+                      ->orWhere('subject', 'like', '%' . $request->search . '%')
+                      ->orWhere('class_code', 'like', '%' . $request->search . '%');
+            })
+            ->latest()
+            ->paginate(10);
 
-    return view('classes.index', compact('classes'));
-}
+        return view('classes.index', compact('classes'));
+    }
+
     public function create()
     {
         $teachers = User::where('role', 'guru')->get();
@@ -30,22 +34,12 @@ class ClassRoomController extends Controller
         return view('classes.create', compact('teachers'));
     }
 
-    public function store(ClassRoomRequest $request)
+    public function store(StoreClassRoomRequest $request, CreateClassroomAction $action)
     {
-        $request->validate([
-            'class_name' => 'required',
-            'subject' => 'required',
-            'teacher_id' => 'nullable|exists:users,id',
-        ]);
+        $data = $request->validated();
+        $data['class_code'] = strtoupper(\Illuminate\Support\Str::random(6));
 
-        ClassRoom::create([
-            'class_code' => strtoupper(Str::random(6)),
-            'class_name' => $request->class_name,
-            'subject' => $request->subject,
-            'teacher_id' => $request->teacher_id,
-            'description' => $request->description,
-            'is_active' => true,
-        ]);
+        $action->execute($request->user(), $data);
 
         return redirect()
             ->route('classes.index')
@@ -53,21 +47,17 @@ class ClassRoomController extends Controller
     }
 
     public function show(ClassRoom $class)
-{
-    $class->load([
-        'teacher',
-        'meetings',
-        'materials',
-        'tasks',
-        'members'
-    ]);
+    {
+        $class->load([
+            'teacher',
+            'meetings',
+            'materials',
+            'tasks',
+            'members',
+        ]);
 
-    return view(
-        'classes.show',
-        compact('class')
-    );
-}
-
+        return view('classes.show', compact('class'));
+    }
 
     public function edit(ClassRoom $class)
     {
@@ -76,24 +66,18 @@ class ClassRoomController extends Controller
         return view('classes.edit', compact('class', 'teachers'));
     }
 
-    public function update(ClassRoomRequest $request, ClassRoom $class)
+    public function update(UpdateClassRoomRequest $request, ClassRoom $class, UpdateClassroomAction $action)
     {
-        $class->update($request->only([
-            'class_name',
-            'subject',
-            'teacher_id',
-            'description',
-            'is_active'
-        ]));
+        $action->execute($class, $request->validated());
 
         return redirect()
             ->route('classes.index')
             ->with('success', 'Kelas berhasil diperbarui.');
     }
 
-    public function destroy(ClassRoom $class)
+    public function destroy(ClassRoom $class, DeleteClassroomAction $action)
     {
-        $class->delete();
+        $action->execute($class);
 
         return back()->with('success', 'Kelas berhasil dihapus.');
     }
