@@ -57,7 +57,7 @@ jobs:
             **/tests/**
             **/.env**
             **/.env.example**
-            **/vendor/**
+            /vendor/**
             **/storage/logs/*.log**
             **/README.md**
             **/CHANGELOG.md**
