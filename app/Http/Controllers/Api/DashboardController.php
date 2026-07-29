@@ -3,39 +3,32 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\ClassRoom;
-use App\Models\Meeting;
-use App\Models\Material;
-use App\Models\Task;
-use App\Models\Submission;
+use App\Services\DashboardService;
+use App\Traits\ApiResponse;
 
 class DashboardController extends Controller
 {
+    use ApiResponse;
+
+    public function __construct(protected DashboardService $dashboardService)
+    {
+    }
+
     public function index()
     {
+        $counts = $this->dashboardService->getCounts();
+
         return response()->json([
-
             'success' => true,
-
             'statistics' => [
-
-                'total_guru' => User::where('role', 'guru')->count(),
-
-                'total_siswa' => User::where('role', 'siswa')->count(),
-
-                'total_kelas' => ClassRoom::count(),
-
-                'total_pertemuan' => Meeting::count(),
-
-                'total_materi' => Material::count(),
-
-                'total_tugas' => Task::count(),
-
-                'total_submission' => Submission::count(),
-
-            ]
-
+                'total_guru'       => $counts['guru'],
+                'total_siswa'      => $counts['siswa'],
+                'total_kelas'      => $counts['kelas'],
+                'total_pertemuan'  => $counts['pertemuan'],
+                'total_materi'     => $counts['materi'],
+                'total_tugas'      => $counts['tugas'],
+                'total_submission' => $counts['submission'],
+            ],
         ]);
     }
 }
