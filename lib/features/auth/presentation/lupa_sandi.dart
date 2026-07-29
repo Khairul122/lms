@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:lms/services/api_service.dart';
 import 'package:lms/features/auth/presentation/atur_ulang_sandi.dart';
 
@@ -22,12 +23,7 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
   Future<void> _resetPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Masukkan email Anda terlebih dahulu!'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      AppDialog.showError(context, 'Masukkan email Anda terlebih dahulu!');
       return;
     }
 
@@ -46,16 +42,12 @@ class _LupaSandiScreenState extends State<LupaSandiScreen> {
         final message = (response is Map ? response["message"] : null) ??
             "Gagal mengirim email reset.";
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message.toString()), backgroundColor: Colors.red),
-          );
+          AppDialog.showError(context, message.toString());
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-        );
+        AppDialog.showError(context, 'Error: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

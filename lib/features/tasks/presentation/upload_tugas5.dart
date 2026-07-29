@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/features/tasks/presentation/kirimtugas3.dart';
 
@@ -301,16 +302,10 @@ class _UploadTugas5ScreenState extends State<UploadTugas5Screen> {
                 KirimTugas3.show(
                   context, 
                   taskId: widget.taskId, 
-                  onSuccess: () {
+                  onSuccess: () async {
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Tugas berhasil diserahkan ke sistem!'),
-                          backgroundColor: Colors.green,
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                      Navigator.pop(context); // Kembali ke halaman list daftar tugas
+                      await AppDialog.showSuccess(context, 'Tugas berhasil diserahkan ke sistem!');
+                      if (mounted) Navigator.pop(context);
                     }
                   }
                 );

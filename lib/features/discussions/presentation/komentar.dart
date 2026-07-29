@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 
 class KomentarScreen extends StatefulWidget {
   const KomentarScreen({super.key});
@@ -82,14 +83,7 @@ class _KomentarScreenState extends State<KomentarScreen> {
           );
         }
       });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Komentar tidak boleh kosong!'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+      AppDialog.showError(context, 'Komentar tidak boleh kosong!');
   }
 
   @override

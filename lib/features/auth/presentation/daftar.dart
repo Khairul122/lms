@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
 import 'package:lms/features/onboarding/presentation/homepage.dart';
@@ -299,12 +300,12 @@ class _DaftarScreenState extends State<DaftarScreen> {
     final String confirmPassword = _confirmPasswordController.text.trim();
 
     if (name.isEmpty || email.isEmpty || password.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Nama, Email, dan Sandi harus diisi')));
+      AppDialog.showError(context, 'Nama, Email, dan Sandi harus diisi');
       return;
     }
 
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Konfirmasi kata sandi tidak cocok')));
+      AppDialog.showError(context, 'Konfirmasi kata sandi tidak cocok');
       return;
     }
 
@@ -314,28 +315,16 @@ class _DaftarScreenState extends State<DaftarScreen> {
 
       if (syncSuccess) {
         if (mounted) {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Berhasil'),
-              content: const Text('Akun Anda telah berhasil dibuat di database server.'),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const homepage()));
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            ),
-          );
+          await AppDialog.showSuccess(context, 'Akun Anda telah berhasil dibuat di database server.');
+          if (mounted) {
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const homepage()));
+          }
         }
       } else {
         throw Exception(_lastRegisterError ?? "Gagal mendaftarkan data profil Anda ke MySQL Server.");
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) AppDialog.showError(context, e.toString().replaceAll('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }

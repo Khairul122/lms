@@ -100,6 +100,10 @@ class ApiClient {
       };
     }
 
+    if (response.statusCode == 401) {
+      SharedPreferences.getInstance().then((prefs) => prefs.remove("token"));
+    }
+
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonBody;
     }

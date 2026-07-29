@@ -115,6 +115,10 @@ class ApiService {
       };
     }
 
+    if (response.statusCode == 401) {
+      SharedPreferences.getInstance().then((prefs) => prefs.remove("token"));
+    }
+
     // 2. Jika HTTP Status Code 200 - 299 (Sukses)
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonBody;

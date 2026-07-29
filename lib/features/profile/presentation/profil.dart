@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
 import 'package:lms/features/profile/presentation/info_profil.dart';
@@ -54,9 +56,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 
   Future<void> _pickAndUploadImage() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Fitur ganti foto profil terintegrasi dengan backend server.'))
-    );
+    AppDialog.showInfo(context, 'Fitur ganti foto profil terintegrasi dengan backend server.');
   }
 
   @override
@@ -160,11 +160,21 @@ class _ProfilScreenState extends State<ProfilScreen> {
                               child: _isUploading
                                   ? const Center(child: CircularProgressIndicator())
                                   : (photoUrl != null
-                                      ? Image.network(
-                                          photoUrl,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
-                                        )
+                                      ? (photoUrl.startsWith('data:image')
+                                          ? Image.memory(
+                                              base64Decode(photoUrl.split(',').last),
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
+                                            )
+                                          : Image.network(
+                                              photoUrl,
+                                              headers: const {
+                                                'localtonet-skip-warning': 'true',
+                                                'ngrok-skip-browser-warning': 'true',
+                                              },
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, __, ___) => _buildDefaultAvatar(),
+                                            ))
                                       : _buildDefaultAvatar()),
                             ),
                           ),
@@ -280,45 +290,38 @@ class _ProfilScreenState extends State<ProfilScreen> {
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Keluar'),
-        content: const Text('Apakah Anda yakin ingin keluar?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await ApiService.post("/logout", {});
-              } catch (e) {
-                debugPrint("Session Laravel sudah hangus atau server offline: $e");
-              }
-
-              final prefs = await SharedPreferences.getInstance();
-              await prefs.remove("token");
-              await prefs.remove("user_id");
-              await prefs.remove("name");
-              await prefs.remove("email");
-              await prefs.remove("role");
-
-              if (context.mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                  (route) => false,
-                );
-              }
-            },
-            child: const Text('Keluar', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+  Future<void> _showLogoutDialog(BuildContext context) async {
+    final confirm = await AppDialog.showConfirm(
+      context,
+      title: 'Konfirmasi Logout',
+      message: 'Apakah Anda yakin ingin keluar dari akun ini?',
+      confirmText: 'Ya, Keluar',
+      cancelText: 'Batal',
+      confirmColor: Colors.red,
     );
+
+    if (!confirm) return;
+
+    try {
+      await ApiService.post("/logout", {});
+    } catch (e) {
+      debugPrint("Session Laravel sudah hangus atau server offline: $e");
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove("token");
+    await prefs.remove("user_id");
+    await prefs.remove("name");
+    await prefs.remove("email");
+    await prefs.remove("role");
+
+    if (context.mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+        (route) => false,
+      );
+    }
   }
 
 }

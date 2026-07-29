@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:lms/services/api_service.dart';
 
 class KirimTugas3 {
@@ -122,9 +123,7 @@ class KirimTugas3 {
                                 }
                               } catch (e) {
                                 setDialogState(() => isSubmitting = false);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Gagal mengumpulkan tugas: $e')),
-                                );
+                                AppDialog.showError(context, 'Gagal mengumpulkan tugas: $e');
                               }
                             },
                             style: ElevatedButton.styleFrom(

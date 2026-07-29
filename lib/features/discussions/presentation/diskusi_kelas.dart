@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
 
@@ -75,9 +76,7 @@ class _DiskusiKelasScreenState extends State<DiskusiKelasScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengirim pesan ke server: $e')),
-        );
+        AppDialog.showError(context, 'Gagal mengirim pesan ke server: $e');
       }
     }
   }

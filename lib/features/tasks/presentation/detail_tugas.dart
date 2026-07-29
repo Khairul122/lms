@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -130,24 +131,18 @@ class _DetailTugasScreenState extends State<DetailTugasScreen> {
       if (success) {
         setState(() => _isSubmitted = true);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Tugas berhasil dikirim!'), backgroundColor: Colors.green),
-          );
+          await AppDialog.showSuccess(context, 'Tugas berhasil dikirim!');
         }
         await _checkSubmissionStatus();
       } else {
         final message = (decoded is Map ? decoded['message'] : null) ?? 'Gagal mengirim tugas (${streamedResponse.statusCode})';
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(message.toString()), backgroundColor: Colors.red),
-          );
+          AppDialog.showError(context, message.toString());
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mengirim tugas: $e'), backgroundColor: Colors.red),
-        );
+        AppDialog.showError(context, 'Gagal mengirim tugas: $e');
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

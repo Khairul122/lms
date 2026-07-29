@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 
 class MateriDetailDinamis extends StatelessWidget {
   final String title;
@@ -168,9 +169,7 @@ class MateriDetailDinamis extends StatelessWidget {
                     // File Preview (Clickable)
                     GestureDetector(
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Membuka $fileName...')),
-                        );
+                        AppDialog.showInfo(context, 'Membuka $fileName...');
                       },
                       child: Container(
                         width: double.infinity,

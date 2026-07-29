@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:lms/services/api_service.dart';
 import 'package:lms/features/auth/presentation/login.dart';
 
@@ -33,16 +34,12 @@ class _AturUlangSandiScreenState extends State<AturUlangSandiScreen> {
     final confirmPassword = _confirmPasswordController.text.trim();
 
     if (code.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Semua field harus diisi!'), backgroundColor: Colors.orange),
-      );
+      AppDialog.showError(context, 'Semua field harus diisi!');
       return;
     }
 
     if (newPassword != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Konfirmasi kata sandi tidak cocok!'), backgroundColor: Colors.red),
-      );
+      AppDialog.showError(context, 'Konfirmasi kata sandi tidak cocok!');
       return;
     }
 
@@ -57,24 +54,24 @@ class _AturUlangSandiScreenState extends State<AturUlangSandiScreen> {
 
       if (response is Map && response["success"] == true) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Kata sandi berhasil diubah! Silakan login.'), backgroundColor: Colors.green),
-          );
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const LoginScreen()),
-            (route) => false,
-          );
+          await AppDialog.showSuccess(context, 'Kata sandi berhasil diubah! Silakan login.');
+          if (mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false,
+            );
+          }
         }
       } else {
         final message = (response is Map ? response["message"] : null) ?? "Gagal mengubah sandi.";
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString()), backgroundColor: Colors.red));
+          AppDialog.showError(context, message.toString());
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        AppDialog.showError(context, 'Error: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

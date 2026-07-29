@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:lms/services/api_service.dart'; // Pastikan path ApiService sudah benar
 
 class KodeKelasDialog extends StatefulWidget {
@@ -23,12 +24,7 @@ class _KodeKelasDialogState extends State<KodeKelasDialog> {
 
     // Validasi input jika kosong
     if (classCode.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Silahkan masukkan kode kelas terlebih dahulu!'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      AppDialog.showError(context, 'Silahkan masukkan kode kelas terlebih dahulu!');
       return;
     }
 
@@ -39,7 +35,6 @@ class _KodeKelasDialogState extends State<KodeKelasDialog> {
     try {
       debugPrint("🚀 [DEBUG] Mengirim kode kelas: $classCode ke ApiService...");
 
-      // Memanggil endpoint Laravel /api/classes/join
       final response = await ApiService.post('/classes/join', {
         'class_code': classCode,
       });
@@ -48,41 +43,22 @@ class _KodeKelasDialogState extends State<KodeKelasDialog> {
 
       if (!mounted) return;
 
-      // Cek apakah response berhasil
       if (response is Map && response['success'] == true) {
         final String message = response['message'] ?? 'Berhasil bergabung ke kelas!';
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // Tutup dialog dan beri sinyal 'true' ke beranda untuk auto-refresh
-        Navigator.of(context).pop(true);
+        await AppDialog.showSuccess(context, message);
+        if (mounted) Navigator.of(context).pop(true);
       } else {
-        // Jika response mengembalikan pesan gagal/error dari backend
         final String errorMsg = (response is Map && response.containsKey('message'))
             ? response['message']
             : 'Gagal bergabung ke kelas';
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(errorMsg),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppDialog.showError(context, errorMsg);
       }
     } catch (e) {
       debugPrint("❌ [DEBUG] Error saat join kelas: $e");
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Terjadi kesalahan: ${e.toString().replaceAll('Exception: ', '')}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      AppDialog.showError(context, 'Terjadi kesalahan: ${e.toString().replaceAll('Exception: ', '')}');
     } finally {
       // 🛑 DILAKUKAN SELALU: Mematikan animasi loading mutar-mutar
       if (mounted) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
 import 'package:lms/features/classroom/presentation/dftr_kelas.dart';
@@ -337,9 +338,7 @@ class _homepageState extends State<homepage> {
                       onPressed: _isDialogLoading ? null : () async {
                         final token = _tokenController.text.trim();
                         if (token.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Masukkan kode kelas terlebih dahulu!'), backgroundColor: Colors.orange)
-                          );
+                          AppDialog.showError(context, 'Masukkan kode kelas terlebih dahulu!');
                           return;
                         }
 
@@ -369,15 +368,11 @@ class _homepageState extends State<homepage> {
                                 ? response['message'] 
                                 : 'Gagal bergabung ke kelas';
                                 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(msg), backgroundColor: Colors.red)
-                            );
+                            AppDialog.showError(context, msg);
                           }
                         } catch (e) {
                           if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Terjadi kesalahan: $e'), backgroundColor: Colors.red)
-                          );
+                          AppDialog.showError(context, 'Terjadi kesalahan: $e');
                         } finally {
                           setDialogState(() => _isDialogLoading = false);
                         }

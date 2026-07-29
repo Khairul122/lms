@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:lms/features/onboarding/presentation/homepage.dart';
@@ -198,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _login() async {
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email dan kata sandi harus diisi')));
+      AppDialog.showError(context, 'Email dan kata sandi harus diisi');
       return;
     }
     setState(() => _isLoading = true);
@@ -214,9 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (user != null && user["role"] != null && user["role"] != "siswa") {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Akun ini bukan akun Siswa")),
-            );
+            AppDialog.showError(context, "Akun ini bukan akun Siswa");
           }
           return;
         }
@@ -226,7 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
           await prefs.setString("token", token.toString());
         }
         if (user != null) {
-          await prefs.setInt("user_id", user["id"] ?? 0);
+          await prefs.setInt("user_id", int.tryParse(user["id"].toString()) ?? 0);
           await prefs.setString("name", user["name"] ?? "");
           await prefs.setString("email", user["email"] ?? "");
           await prefs.setString("role", user["role"] ?? "");
@@ -236,14 +235,12 @@ class _LoginScreenState extends State<LoginScreen> {
         if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const homepage()));
       } else {
         final message = (response is Map ? response["message"] : null) ?? "Email atau kata sandi salah";
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString())));
+        if (mounted) AppDialog.showError(context, message.toString());
       }
     } catch (e) {
       debugPrint("Error login siswa: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Gagal terhubung ke server\n$e")),
-        );
+        AppDialog.showError(context, "Gagal terhubung ke server\n$e");
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

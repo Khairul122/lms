@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:lms/services/api_service.dart';
 
 class UbahKataSandiScreen extends StatefulWidget {
@@ -170,12 +171,12 @@ class _UbahKataSandiScreenState extends State<UbahKataSandiScreen> {
     final konfirmasiSandi = _konfirmasiSandiController.text.trim();
 
     if (sandiLama.isEmpty || sandiBaru.isEmpty || konfirmasiSandi.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Semua field harus diisi'), backgroundColor: Colors.red));
+      AppDialog.showError(context, 'Semua field harus diisi');
       return;
     }
 
     if (sandiBaru != konfirmasiSandi) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Konfirmasi tidak cocok'), backgroundColor: Colors.red));
+      AppDialog.showError(context, 'Konfirmasi kata sandi tidak cocok');
       return;
     }
 
@@ -189,18 +190,18 @@ class _UbahKataSandiScreenState extends State<UbahKataSandiScreen> {
 
       if (response is Map && response["success"] == true) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Kata sandi berhasil diubah'), backgroundColor: Colors.green));
-          Navigator.pop(context);
+          await AppDialog.showSuccess(context, 'Kata sandi berhasil diubah');
+          if (mounted) Navigator.pop(context);
         }
       } else {
         final message = (response is Map ? response["message"] : null) ?? "Gagal mengubah kata sandi.";
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString()), backgroundColor: Colors.red));
+          AppDialog.showError(context, message.toString());
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+        AppDialog.showError(context, 'Error: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

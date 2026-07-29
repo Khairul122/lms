@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:lms/services/api_service.dart';
 
 class InfoProfilScreen extends StatefulWidget {
@@ -65,21 +66,17 @@ class _InfoProfilScreenState extends State<InfoProfilScreen> {
       if (response is Map && response['success'] == true) {
         if (mounted) {
           setState(() => _isEditing = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profil berhasil diperbarui')),
-          );
+          AppDialog.showSuccess(context, 'Profil berhasil diperbarui');
         }
       } else {
         final message = (response is Map ? response['message'] : null) ?? 'Gagal memperbarui profil';
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message.toString())));
+          AppDialog.showError(context, message.toString());
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memperbarui profil: $e')),
-        );
+        AppDialog.showError(context, 'Gagal memperbarui profil: $e');
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

@@ -162,6 +162,10 @@ class LampiranMateri extends StatelessWidget {
                                         child: data['file_url'] != null
                                             ? Image.network(
                                                 data['file_url'],
+                                                headers: const {
+                                                  'localtonet-skip-warning': 'true',
+                                                  'ngrok-skip-browser-warning': 'true',
+                                                },
                                                 fit: BoxFit.cover,
                                                 errorBuilder: (context, error, stackTrace) => 
                                                   const Center(child: Icon(Icons.description, size: 50, color: Color(0xFF42A5F5))),
