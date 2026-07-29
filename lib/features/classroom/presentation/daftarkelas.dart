@@ -3,7 +3,8 @@ import 'package:guru/features/classroom/data/class_repository.dart';
 import 'package:guru/features/classroom/presentation/tambah_pertemuan.dart';
 import 'package:guru/features/classroom/presentation/daftarmurid.dart';
 import 'package:guru/features/classroom/presentation/buatkelas.dart';
-import 'package:guru/widgets/bottom_nav_bar.dart';
+import 'package:guru/core/widgets/bottom_nav_bar.dart';
+import 'package:guru/app_navigation.dart';
 import 'package:guru/features/discussions/presentation/tambahkomentar.dart';
 
 class DaftarKelas extends StatefulWidget {
@@ -126,8 +127,10 @@ class _DaftarKelasState extends State<DaftarKelas> {
           ),
         ],
       ),
-      bottomNavigationBar: const CustomBottomNavBar(
+      bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: 1,
+        onTabSelected: (index) => AppNavigation.goToTab(context, index),
+        onCenterTap: () => AppNavigation.openTambahKelas(context),
       ),
     );
   }

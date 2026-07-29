@@ -4,11 +4,9 @@ import 'package:guru/features/classroom/data/class_repository.dart';
 import 'package:guru/features/classroom/data/meeting_repository.dart';
 import 'dart:async';
 import 'package:guru/features/classroom/presentation/daftarkelas.dart';
-import 'package:guru/features/classroom/presentation/tambahkelas.dart';
-import 'package:guru/features/tasks/presentation/penilaian.dart';
-import 'package:guru/features/profile/presentation/profil.dart';
 import 'package:guru/features/notifications/presentation/notifikasi.dart';
-import 'package:guru/widgets/bottom_nav_bar.dart';
+import 'package:guru/core/widgets/bottom_nav_bar.dart';
+import 'package:guru/app_navigation.dart';
 import 'package:guru/features/classroom/presentation/daftarmurid.dart';
 import 'package:guru/features/classroom/presentation/carikelas.dart';
 import 'package:guru/features/classroom/presentation/tambah_pertemuan.dart';
@@ -383,7 +381,11 @@ class _HalamanUtamaState extends State<HalamanUtama> {
               ),
             ),
           ),
-      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 0),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: 0,
+        onTabSelected: (index) => AppNavigation.goToTab(context, index),
+        onCenterTap: () => AppNavigation.openTambahKelas(context),
+      ),
     );
   }
 

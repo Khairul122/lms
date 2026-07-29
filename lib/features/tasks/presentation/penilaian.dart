@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guru/features/classroom/data/class_repository.dart';
-import 'package:guru/widgets/bottom_nav_bar.dart';
+import 'package:guru/core/widgets/bottom_nav_bar.dart';
+import 'package:guru/app_navigation.dart';
 import 'package:guru/features/tasks/presentation/daftar_pertemuan_penilaian.dart';
 
 class Penilaian extends StatefulWidget {
@@ -100,7 +101,11 @@ class _PenilaianState extends State<Penilaian> {
           ),
         ],
       ),
-      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 2),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: 2,
+        onTabSelected: (index) => AppNavigation.goToTab(context, index),
+        onCenterTap: () => AppNavigation.openTambahKelas(context),
+      ),
     );
   }
 

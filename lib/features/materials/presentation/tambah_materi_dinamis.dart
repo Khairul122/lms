@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:guru/services/api_service.dart';
-import 'package:guru/widgets/file_source_dialog.dart';
+import 'package:guru/core/widgets/file_source_dialog.dart';
 import 'package:guru/core/services/fcm_service.dart';
 
 class TambahMateriDinamis extends StatefulWidget {

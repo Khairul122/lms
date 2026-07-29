@@ -3,7 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:guru/features/profile/data/profile_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:guru/widgets/bottom_nav_bar.dart';
+import 'package:guru/core/widgets/bottom_nav_bar.dart';
+import 'package:guru/app_navigation.dart';
 import 'package:guru/features/auth/presentation/login.dart';
 import 'package:guru/features/profile/presentation/info_akun.dart';
 
@@ -339,7 +340,11 @@ class _ProfilState extends State<Profil> {
           );
         },
       ),
-      bottomNavigationBar: const CustomBottomNavBar(selectedIndex: 3),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: 3,
+        onTabSelected: (index) => AppNavigation.goToTab(context, index),
+        onCenterTap: () => AppNavigation.openTambahKelas(context),
+      ),
     );
   }
 
