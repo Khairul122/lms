@@ -24,7 +24,7 @@ class ApiService {
       "Accept": "application/json",
       "Content-Type": "application/json",
       "ngrok-skip-browser-warning": "true",
-      "localtonet-skip-browser-warning": "true",
+      "localtonet-skip-warning": "true",
     };
 
     // Jika token Sanctum tersedia, langsung suntikkan ke header
@@ -106,11 +106,12 @@ class ApiService {
     // 1. Coba decode response body menjadi JSON Map/List
     try {
       jsonBody = jsonDecode(response.body);
-    } catch (_) {
-      // Jika backend melempar Fatal Error (HTML 500), bungkus rapi agar UI tidak crash
+    } catch (e) {
+      print("❌ GAGAL PARSE JSON (${response.statusCode}):");
+      print(response.body);
       return {
         'success': false,
-        'message': 'Terjadi kesalahan internal server (${response.statusCode}).',
+        'message': 'Respon server bukan JSON valid (${response.statusCode}).',
       };
     }
 

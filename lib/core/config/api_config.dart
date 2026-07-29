@@ -12,6 +12,6 @@ class ApiConfig {
         "Accept": "application/json",
         "Content-Type": "application/json",
         "ngrok-skip-browser-warning": "true",
-        "localtonet-skip-browser-warning": "true",
+        "localtonet-skip-warning": "true",
       };
 }
