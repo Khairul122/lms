@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:guru/features/onboarding/halamanutama.dart';
-import 'package:guru/features/classroom/daftarkelas.dart';
-import 'package:guru/features/tasks/penilaian.dart';
-import 'package:guru/features/profile/profil.dart';
-import 'package:guru/features/classroom/tambahkelas.dart';
+import 'package:guru/features/onboarding/presentation/halamanutama.dart';
+import 'package:guru/features/classroom/presentation/daftarkelas.dart';
+import 'package:guru/features/tasks/presentation/penilaian.dart';
+import 'package:guru/features/profile/presentation/profil.dart';
+import 'package:guru/features/classroom/presentation/tambahkelas.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;

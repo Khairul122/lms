@@ -7,9 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'dart:ui'; // Untuk PlatformDispatcher
 
-import 'features/onboarding/splash_screen.dart';
-import 'features/onboarding/halamanutama.dart';
-import 'features/auth/login.dart';
+import 'features/onboarding/presentation/splash_screen.dart';
+import 'features/onboarding/presentation/halamanutama.dart';
+import 'features/auth/presentation/login.dart';
 import 'package:guru/core/services/notification_service.dart';
 import 'package:guru/config/api_config.dart'; // 🔥 Import ApiConfig
 
