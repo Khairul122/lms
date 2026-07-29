@@ -34,6 +34,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/profile', [AuthController::class, 'updateProfile']);
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index']);

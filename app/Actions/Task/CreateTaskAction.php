@@ -2,6 +2,7 @@
 
 namespace App\Actions\Task;
 
+use App\Models\Notification;
 use App\Models\Task;
 
 class CreateTaskAction
@@ -11,7 +12,7 @@ class CreateTaskAction
      */
     public function execute(array $data): Task
     {
-        return Task::create([
+        $task = Task::create([
             'class_id'    => $data['class_id'],
             'meeting_id'  => $data['meeting_id'] ?? null,
             'title'       => $data['title'],
@@ -21,5 +22,20 @@ class CreateTaskAction
             'attachment'  => $data['attachment'] ?? null,
             'is_active'   => true,
         ]);
+
+        try {
+            Notification::create([
+                'receiver_id' => null,
+                'class_id'    => $task->class_id,
+                'title'       => 'Tugas Baru: ' . $task->title,
+                'message'     => 'Guru telah menambahkan tugas baru. Batas pengumpulan: ' . $task->deadline,
+                'type'        => 'task',
+                'is_read'     => false,
+            ]);
+        } catch (\Exception $e) {
+            // Silence if notification fails
+        }
+
+        return $task;
     }
 }
