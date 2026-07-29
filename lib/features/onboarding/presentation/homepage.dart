@@ -261,9 +261,16 @@ class _homepageState extends State<homepage> {
         child: Row(children: [
           Container(padding: const EdgeInsets.all(10), decoration: BoxDecoration(color: const Color(0xFFFFF0D4), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.access_time_filled, color: Color(0xFFF9A825), size: 28)),
           const SizedBox(width: 16),
-          Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600))
-        ])
-      )
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ]),
+      ),
     );
   }
 

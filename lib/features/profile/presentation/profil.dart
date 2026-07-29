@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart';
@@ -56,7 +57,45 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 
   Future<void> _pickAndUploadImage() async {
-    AppDialog.showInfo(context, 'Fitur ganti foto profil terintegrasi dengan backend server.');
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+
+    if (pickedFile != null) {
+      setState(() {
+        _isUploading = true;
+      });
+
+      try {
+        final bytes = await pickedFile.readAsBytes();
+        final String base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+
+        final response = await ApiService.post('/profile', {
+          'photo': base64Image,
+        });
+
+        if (response != null && response['success'] == true) {
+          if (mounted) {
+            await AppDialog.showSuccess(context, 'Foto profil berhasil diperbarui');
+          }
+        } else {
+          final msg = (response is Map ? response['message'] : null) ?? 'Gagal memperbarui foto profil.';
+          if (mounted) {
+            AppDialog.showError(context, msg.toString());
+          }
+        }
+      } catch (e) {
+        debugPrint("Upload photo failed: $e");
+        if (mounted) {
+          AppDialog.showError(context, 'Gagal memperbarui foto: $e');
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
+        }
+      }
+    }
   }
 
   @override

@@ -143,7 +143,7 @@ class _DaftarKelasScreenState extends State<DaftarKelasScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 180,
+        constraints: const BoxConstraints(minHeight: 160),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -157,51 +157,57 @@ class _DaftarKelasScreenState extends State<DaftarKelasScreen> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
-          child: Row(
-            children: [
-              Expanded(
-                flex: 6,
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    // 🔥 Perbaikan: Menggunakan nama properti berhuruf kecil
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  flex: 6,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            className,
+                            style: TextStyle(fontSize: 11, color: Colors.grey[700], fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        child: Text(
-                          className,
-                          style: TextStyle(fontSize: 12, color: Colors.grey[700], fontWeight: FontWeight.bold),
+                        const SizedBox(height: 8),
+                        Text(
+                          subject,
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        subject,
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.black),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Expanded(
-                flex: 4,
-                child: Container(
-                  color: bgColor,
-                  child: Image.asset(
-                    imagePath,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => const Center(
-                      child: Icon(Icons.class_outlined, size: 60, color: Colors.white),
+                      ],
                     ),
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    color: bgColor,
+                    child: Image.asset(
+                      imagePath,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) => const Center(
+                        child: Icon(Icons.class_outlined, size: 50, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

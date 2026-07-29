@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lms/core/widgets/app_dialog.dart';
 import 'package:lms/services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class InfoProfilScreen extends StatefulWidget {
   const InfoProfilScreen({super.key});
@@ -64,9 +65,25 @@ class _InfoProfilScreenState extends State<InfoProfilScreen> {
       });
 
       if (response is Map && response['success'] == true) {
+        final userData = response['user'] ?? response['data'];
+        final prefs = await SharedPreferences.getInstance();
+
+        if (userData is Map) {
+          if (userData['name'] != null) await prefs.setString("name", userData['name'].toString());
+          if (userData['phone'] != null) await prefs.setString("phone", userData['phone'].toString());
+        } else {
+          await prefs.setString("name", _namaController.text.trim());
+          await prefs.setString("phone", _teleponController.text.trim());
+        }
+        await prefs.reload();
+
         if (mounted) {
-          setState(() => _isEditing = false);
-          AppDialog.showSuccess(context, 'Profil berhasil diperbarui');
+          setState(() {
+            _isEditing = false;
+            _usernameController.text = _namaController.text.trim();
+          });
+          await AppDialog.showSuccess(context, 'Profil berhasil diperbarui');
+          _loadProfile();
         }
       } else {
         final message = (response is Map ? response['message'] : null) ?? 'Gagal memperbarui profil';
@@ -104,12 +121,12 @@ class _InfoProfilScreenState extends State<InfoProfilScreen> {
                       bottomRight: Radius.circular(30),
                     ),
                   ),
-                  child: SafeArea(
+                  child: const SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Text('EduSmart', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w600)),
                         ],
                       ),
