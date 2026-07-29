@@ -3,14 +3,18 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\SubmissionResource;
 use App\Models\Submission;
 use App\Services\SubmissionService;
 use App\Actions\Submission\StoreSubmissionAction;
 use App\Actions\Submission\GradeSubmissionAction;
+use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 
 class SubmissionController extends Controller
 {
+    use ApiResponse;
+
     protected SubmissionService $submissionService;
 
     public function __construct(SubmissionService $submissionService)
@@ -25,11 +29,7 @@ class SubmissionController extends Controller
     {
         $submissions = $this->submissionService->getAllSubmissions();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Data submission berhasil diambil.',
-            'data'    => $submissions,
-        ]);
+        return $this->success(SubmissionResource::collection($submissions), 'Data submission berhasil diambil.');
     }
 
     /**
@@ -39,18 +39,15 @@ class SubmissionController extends Controller
     {
         $submission->load(['task', 'student']);
 
-        return response()->json([
-            'success' => true,
-            'data'    => [
-                'id'           => $submission->id,
-                'task'         => $submission->task,
-                'student'      => $submission->student,
-                'file_path'    => $submission->file_path,
-                'note'         => $submission->note,
-                'score'        => $submission->score,
-                'teacher_note' => $submission->teacher_note,
-                'submitted_at' => $submission->submitted_at,
-            ]
+        return $this->success([
+            'id'           => $submission->id,
+            'task'         => $submission->task,
+            'student'      => $submission->student,
+            'file_path'    => $submission->file_path,
+            'note'         => $submission->note,
+            'score'        => $submission->score,
+            'teacher_note' => $submission->teacher_note,
+            'submitted_at' => $submission->submitted_at,
         ]);
     }
 
@@ -68,11 +65,7 @@ class SubmissionController extends Controller
 
         $submission = $action->execute($request);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Submission berhasil dikirim ke server.',
-            'data'    => $submission,
-        ], 201);
+        return $this->created($submission, 'Submission berhasil dikirim ke server.');
     }
 
     /**
@@ -82,10 +75,6 @@ class SubmissionController extends Controller
     {
         $submission = $action->execute($id, $request->all());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Penilaian tugas berhasil diperbarui.',
-            'data'    => $submission,
-        ], 200);
+        return $this->success($submission, 'Penilaian tugas berhasil diperbarui.');
     }
 }
