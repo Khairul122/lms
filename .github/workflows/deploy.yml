@@ -41,30 +41,36 @@ jobs:
         run: |
           zip -r vendor.zip vendor/
 
-      - name: 📤 7. Sync Project via FTP to Server
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT }}
-          protocol: ftp
-          security: loose
-          server-dir: public_html/backend-lms/
-          exclude: |
-            .git**
-            .git/**
-            .github/**
-            node_modules/**
-            tests/**
-            .env
-            .env.example
-            vendor/**
-            !public/vendor/**
-            storage/logs/*.log
-            README.md
-            CHANGELOG.md
-            phpunit.xml
+      - name: 📤 7. Sync Project via FTP to Server (lftp)
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp
+          lftp -e "
+            set ftp:ssl-allow no;
+            set ssl:verify-certificate no;
+            set ftp:passive-mode true;
+            set net:timeout 10;
+            set net:max-retries 2;
+            open -u ${FTP_USERNAME},'${FTP_PASSWORD}' -p ${FTP_PORT:-21} ${FTP_SERVER};
+            mirror -R --verbose \
+              --exclude-glob .git/ \
+              --exclude-glob .github/ \
+              --exclude-glob node_modules/ \
+              --exclude-glob tests/ \
+              --exclude-glob .env \
+              --exclude-glob .env.example \
+              --exclude-glob vendor/ \
+              --exclude-glob storage/logs/ \
+              --exclude-glob README.md \
+              --exclude-glob CHANGELOG.md \
+              --exclude-glob phpunit.xml \
+              ./ public_html/backend-lms/;
+            quit;
+          "
 
       - name: ⚡ 8. Execute Auto-Extract Hook on Server
         run: |
