@@ -41,26 +41,14 @@ jobs:
         run: |
           zip -r vendor.zip vendor/
 
-      - name: 📤 7a. Sync Project via SFTP (Port 22 / SFTP)
-        if: ${{ secrets.FTP_PORT == '22' || secrets.FTP_PROTOCOL == 'sftp' }}
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
-        with:
-          host: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT || 22 }}
-          local_path: './*'
-          remote_path: 'public_html/backend-lms/'
-
-      - name: 📤 7b. Sync Project via FTP/FTPS (Port 21 / FTP)
-        if: ${{ secrets.FTP_PORT != '22' && secrets.FTP_PROTOCOL != 'sftp' }}
+      - name: 📤 7. Sync Project via FTP to Server
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          port: ${{ secrets.FTP_PORT || 21 }}
-          protocol: ${{ secrets.FTP_PROTOCOL || 'ftp' }}
+          port: ${{ secrets.FTP_PORT }}
+          protocol: ftp
           security: loose
           server-dir: public_html/backend-lms/
           exclude: |
@@ -78,7 +66,7 @@ jobs:
             CHANGELOG.md
             phpunit.xml
 
-      - name: ⚡ 6. Execute Auto-Extract Hook on Server
+      - name: ⚡ 8. Execute Auto-Extract Hook on Server
         run: |
           DEPLOY_KEY="${{ secrets.DEPLOY_HOOK_KEY }}"
           if [ -z "$DEPLOY_KEY" ]; then
@@ -87,7 +75,7 @@ jobs:
           RESPONSE=$(curl -s "https://backend-lms.synectra.xyz/deploy-hook.php?key=${DEPLOY_KEY}")
           echo "Server Hook Response: $RESPONSE"
 
-      - name: 🔔 7. Send Telegram Notification on Status
+      - name: 🔔 9. Send Telegram Notification on Status
         if: always()
         run: |
           echo "Deployment process completed with status: ${{ job.status }}"
