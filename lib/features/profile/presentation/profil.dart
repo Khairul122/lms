@@ -9,6 +9,7 @@ import 'package:guru/core/widgets/bottom_nav_bar.dart';
 import 'package:guru/app_navigation.dart';
 import 'package:guru/features/auth/presentation/login.dart';
 import 'package:guru/features/profile/presentation/info_akun.dart';
+import 'package:guru/core/services/notification_watcher.dart';
 
 class Profil extends StatefulWidget {
   const Profil({super.key});
@@ -47,6 +48,8 @@ class _ProfilState extends State<Profil> {
     await prefs.remove("role");
     await prefs.remove("nip");
     await prefs.remove("phone");
+
+    NotificationWatcher.instance.stop();
 
     if (mounted) {
       Navigator.pushReplacement(

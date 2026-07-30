@@ -4,8 +4,9 @@ import 'package:guru/features/classroom/data/class_repository.dart';
 import 'package:guru/features/classroom/data/meeting_repository.dart';
 import 'dart:async';
 import 'package:guru/features/classroom/presentation/daftarkelas.dart';
-import 'package:guru/features/notifications/presentation/notifikasi.dart';
 import 'package:guru/core/widgets/bottom_nav_bar.dart';
+import 'package:guru/core/services/notification_watcher.dart';
+import 'package:guru/core/widgets/notification_bell.dart';
 import 'package:guru/app_navigation.dart';
 import 'package:guru/features/classroom/presentation/daftarmurid.dart';
 import 'package:guru/features/classroom/presentation/carikelas.dart';
@@ -39,6 +40,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
     super.initState();
     _loadAllData();
     _startAutoScroll();
+    NotificationWatcher.instance.start();
   }
 
   @override
@@ -181,10 +183,7 @@ class _HalamanUtamaState extends State<HalamanUtama> {
           style: TextStyle(color: Color(0xFF1A237E), fontWeight: FontWeight.bold, fontSize: 24)
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_outlined, color: Color(0xFF1A237E), size: 30),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Notifikasi())),
-          ),
+          const NotificationBell(),
           const SizedBox(width: 10),
         ],
       ),
