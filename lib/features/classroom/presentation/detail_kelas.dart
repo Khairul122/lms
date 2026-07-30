@@ -97,7 +97,7 @@ class _DetailKelasScreenState extends State<DetailKelasScreen> {
                   // Main Class Card
                   Container(
                     width: double.infinity,
-                    height: 160,
+                    constraints: const BoxConstraints(minHeight: 160),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
                         begin: Alignment.topLeft,
@@ -113,54 +113,51 @@ class _DetailKelasScreenState extends State<DetailKelasScreen> {
                         ),
                       ],
                     ),
-                    child: Stack(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 25),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                widget.subject,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.bold,
-                                  height: 1.1,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 25),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  widget.subject,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    height: 1.15,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                widget.className,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w500,
+                                const SizedBox(height: 8),
+                                Text(
+                                  widget.className,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Positioned(
-                          right: 15,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: Image.asset(
-                              'assets/images/kelas.png',
-                              width: 130,
-                              height: 130,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) => Icon(
-                                Icons.school,
-                                size: 100,
-                                color: Colors.white.withOpacity(0.3),
-                              ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 10),
+                          Image.asset(
+                            'assets/images/kelas.png',
+                            width: 90,
+                            height: 90,
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => Icon(
+                              Icons.school,
+                              size: 70,
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
 
