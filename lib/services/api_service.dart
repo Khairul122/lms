@@ -2,12 +2,14 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:lms/core/config/api_config.dart';
+
 class ApiService {
   static String customBaseUrl = '';
 
   static String get baseUrl {
     if (customBaseUrl.isNotEmpty) return customBaseUrl;
-    return 'https://xbncmdd6jn.localto.net/api';
+    return ApiConfig.baseUrl;
   }
 
   // Helper jika butuh URL domain saja (tanpa /api)
