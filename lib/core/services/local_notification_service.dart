@@ -30,7 +30,7 @@ class LocalNotificationService {
         ?.requestNotificationsPermission();
 
     await _plugin
-        .resolvePlatformSpecificImplementation<DarwinFlutterLocalNotificationsPlugin>()
+        .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
         ?.requestPermissions(alert: true, badge: true, sound: true);
 
     _initialized = true;
