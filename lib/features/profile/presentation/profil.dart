@@ -10,6 +10,7 @@ import 'package:lms/features/notifications/presentation/notifikasi.dart';
 import 'package:lms/features/auth/presentation/login.dart';
 import 'package:lms/core/widgets/bottom_nav_bar.dart';
 import 'package:lms/app_navigation.dart';
+import 'package:lms/core/services/notification_watcher.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -353,6 +354,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
     await prefs.remove("name");
     await prefs.remove("email");
     await prefs.remove("role");
+
+    NotificationWatcher.instance.stop();
 
     if (context.mounted) {
       Navigator.pushAndRemoveUntil(

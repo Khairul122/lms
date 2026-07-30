@@ -5,9 +5,10 @@ import 'package:lms/services/api_service.dart';
 import 'package:lms/features/classroom/presentation/dftr_kelas.dart';
 import 'package:lms/features/tasks/presentation/daftar_tugas.dart';
 import 'package:lms/features/profile/presentation/profil.dart';
-import 'package:lms/features/notifications/presentation/notifikasi.dart';
 import 'package:lms/features/classroom/presentation/detail_kelas.dart';
 import 'package:lms/features/classroom/presentation/carikelas.dart';
+import 'package:lms/core/services/notification_watcher.dart';
+import 'package:lms/core/widgets/notification_bell.dart';
 import 'dart:convert';
 
 class homepage extends StatefulWidget {
@@ -27,6 +28,7 @@ class _homepageState extends State<homepage> {
   void initState() {
     super.initState();
     _loadInitialData();
+    NotificationWatcher.instance.start();
   }
 
   Future<void> _loadInitialData() async {
@@ -150,7 +152,7 @@ class _homepageState extends State<homepage> {
               Expanded(
                 child: Text('Hi, $_siswaNama', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
               ),
-              IconButton(icon: const Icon(Icons.notifications_none, color: Colors.white, size: 28), onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const NotifikasiScreen()))),
+              const NotificationBell(),
             ],
           ),
           const SizedBox(height: 20),

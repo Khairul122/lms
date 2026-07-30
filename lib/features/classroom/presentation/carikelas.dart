@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lms/services/api_service.dart'; // Pastikan path ApiService benar
 import 'package:lms/features/classroom/presentation/detail_kelas.dart';
-import 'package:lms/features/notifications/presentation/notifikasi.dart';
+import 'package:lms/core/widgets/notification_bell.dart';
 
 class CariKelasScreen extends StatefulWidget {
   const CariKelasScreen({super.key});
@@ -115,12 +115,7 @@ class _CariKelasScreenState extends State<CariKelasScreen> {
                             ),
                           ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.notifications_none, color: Colors.white, size: 28),
-                          onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => const NotifikasiScreen()));
-                          },
-                        ),
+                        const NotificationBell(),
                       ],
                     ),
                     const SizedBox(height: 20),
