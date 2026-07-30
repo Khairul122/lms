@@ -68,7 +68,7 @@ jobs:
               --exclude-glob README.md \
               --exclude-glob CHANGELOG.md \
               --exclude-glob phpunit.xml \
-              ./ public_html/backend_lms/;
+              ./ public_html/backend-lms/;
             quit;
           "
 
