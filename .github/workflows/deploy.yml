@@ -30,7 +30,7 @@ jobs:
       - name: 🟢 4. Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: 🛠️ 5. Build Vite Assets for Production
         run: |
@@ -48,7 +48,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           port: ${{ secrets.FTP_PORT || 21 }}
-          protocol: ${{ secrets.FTP_PROTOCOL || 'ftp' }}
+          protocol: ${{ secrets.FTP_PROTOCOL || 'ftps' }}
           security: loose
           server-dir: public_html/backend-lms/
           exclude: |
