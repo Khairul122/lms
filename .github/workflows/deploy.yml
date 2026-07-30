@@ -41,7 +41,19 @@ jobs:
         run: |
           zip -r vendor.zip vendor/
 
-      - name: 📤 7. Sync Project via FTP to Server
+      - name: 📤 7a. Sync Project via SFTP (Port 22 / SFTP)
+        if: ${{ secrets.FTP_PORT == '22' || secrets.FTP_PROTOCOL == 'sftp' }}
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          host: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || 22 }}
+          local_path: './*'
+          remote_path: 'public_html/backend-lms/'
+
+      - name: 📤 7b. Sync Project via FTP/FTPS (Port 21 / FTP)
+        if: ${{ secrets.FTP_PORT != '22' && secrets.FTP_PROTOCOL != 'sftp' }}
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
