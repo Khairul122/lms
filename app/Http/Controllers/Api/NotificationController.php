@@ -27,6 +27,13 @@ class NotificationController extends Controller
         return $this->success(NotificationResource::collection($notifications), 'Data notifikasi berhasil diambil.');
     }
 
+    public function unreadCount()
+    {
+        $count = $this->notificationService->listAll()->where('is_read', false)->count();
+
+        return $this->success(['unread_count' => $count]);
+    }
+
     public function show(Notification $notification)
     {
         $notification->load(['receiver', 'classroom']);

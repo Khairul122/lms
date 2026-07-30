@@ -3,10 +3,16 @@
 namespace App\Actions\Submission;
 
 use App\Models\Submission;
+use App\Models\Task;
+use App\Services\NotificationService;
 use Illuminate\Http\Request;
 
 class StoreSubmissionAction
 {
+    public function __construct(protected NotificationService $notificationService)
+    {
+    }
+
     public function execute(Request $request): Submission
     {
         $filePath = null;
@@ -23,12 +29,32 @@ class StoreSubmissionAction
 
         $userId = auth()->id() ?? $request->user_id ?? 1;
 
-        return Submission::create([
+        $submission = Submission::create([
             'task_id'      => $request->task_id,
             'user_id'      => $userId,
             'file_path'    => $filePath,
             'note'         => $request->note ?? '',
             'submitted_at' => now(),
         ]);
+
+        try {
+            $task = Task::with('classroom')->find($submission->task_id);
+
+            if ($task && $task->classroom && $task->classroom->teacher_id) {
+                $studentName = auth()->user()?->name ?? 'Seorang murid';
+
+                $this->notificationService->notifyUser(
+                    userId: $task->classroom->teacher_id,
+                    title: 'Tugas Dikumpulkan',
+                    message: $studentName . ' telah mengumpulkan tugas: ' . $task->title,
+                    type: 'submission',
+                    classId: $task->class_id,
+                );
+            }
+        } catch (\Exception $e) {
+            // Silence if notification fails
+        }
+
+        return $submission;
     }
 }

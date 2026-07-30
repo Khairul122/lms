@@ -2,11 +2,15 @@
 
 namespace App\Actions\Task;
 
-use App\Models\Notification;
 use App\Models\Task;
+use App\Services\NotificationService;
 
 class CreateTaskAction
 {
+    public function __construct(protected NotificationService $notificationService)
+    {
+    }
+
     /**
      * @param array{class_id:int,meeting_id:?int,title:string,description:?string,deadline:string,max_score:?int,attachment:?string} $data
      */
@@ -24,14 +28,13 @@ class CreateTaskAction
         ]);
 
         try {
-            Notification::create([
-                'receiver_id' => null,
-                'class_id'    => $task->class_id,
-                'title'       => 'Tugas Baru: ' . $task->title,
-                'message'     => 'Guru telah menambahkan tugas baru. Batas pengumpulan: ' . $task->deadline,
-                'type'        => 'task',
-                'is_read'     => false,
-            ]);
+            $this->notificationService->notifyClass(
+                classId: $task->class_id,
+                title: 'Tugas Baru: ' . $task->title,
+                message: 'Guru telah menambahkan tugas baru. Batas pengumpulan: ' . $task->deadline,
+                type: 'task',
+                excludeUserId: auth()->id(),
+            );
         } catch (\Exception $e) {
             // Silence if notification fails
         }

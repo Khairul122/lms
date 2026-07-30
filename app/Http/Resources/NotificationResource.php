@@ -13,6 +13,7 @@ class NotificationResource extends JsonResource
             'id'         => $this->id,
             'receiver'   => optional($this->receiver)->name,
             'class'      => optional($this->classroom)->class_name,
+            'class_code' => optional($this->classroom)->class_code,
             'title'      => $this->title,
             'message'    => $this->message,
             'type'       => $this->type,

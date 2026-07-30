@@ -3,10 +3,14 @@
 namespace App\Actions\Discussion;
 
 use App\Models\Discussion;
-use App\Models\Notification;
+use App\Services\NotificationService;
 
 class PostDiscussionAction
 {
+    public function __construct(protected NotificationService $notificationService)
+    {
+    }
+
     /**
      * @param array{class_id:int,user_id:int,message:string,meeting_id:?int} $data
      */
@@ -20,14 +24,15 @@ class PostDiscussionAction
         ]);
 
         try {
-            Notification::create([
-                'receiver_id' => null,
-                'class_id'    => $discussion->class_id,
-                'title'       => 'Pesan Diskusi Baru',
-                'message'     => (auth()->user()?->name ?? 'Pengguna') . ': ' . substr($discussion->message, 0, 50),
-                'type'        => 'discussion',
-                'is_read'     => false,
-            ]);
+            $senderName = auth()->user()?->name ?? 'Pengguna';
+
+            $this->notificationService->notifyClass(
+                classId: $discussion->class_id,
+                title: 'Pesan Diskusi Baru',
+                message: $senderName . ': ' . substr($discussion->message, 0, 50),
+                type: 'discussion',
+                excludeUserId: $data['user_id'],
+            );
         } catch (\Exception $e) {
             // Silence if notification fails
         }
