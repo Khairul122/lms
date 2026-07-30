@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guru/core/widgets/app_dialog.dart';
 import 'package:guru/features/discussions/data/discussion_repository.dart';
 
@@ -21,16 +22,55 @@ class _TambahKomentarState extends State<TambahKomentar> {
   final TextEditingController _commentController = TextEditingController();
   final DiscussionRepository _discussionRepository = DiscussionRepository();
 
+  int _currentUserId = 0;
+  List<dynamic> _messages = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentUser();
+    _fetchDiscussions();
+  }
+
   @override
   void dispose() {
     _commentController.dispose();
     super.dispose();
   }
 
+  Future<void> _loadCurrentUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    setState(() {
+      _currentUserId = prefs.getInt("user_id") ?? 0;
+    });
+  }
+
+  Future<void> _fetchDiscussions() async {
+    try {
+      final data = await _discussionRepository.getDiscussions(widget.classCode);
+      if (!mounted) return;
+      setState(() {
+        _messages = data;
+        _isLoading = false;
+        _errorMessage = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString();
+      });
+    }
+  }
+
   void _sendComment() async {
     if (_commentController.text.trim().isEmpty) return;
 
     final String message = _commentController.text.trim();
+    _commentController.clear();
 
     try {
       await _discussionRepository.sendDiscussion(
@@ -38,11 +78,7 @@ class _TambahKomentarState extends State<TambahKomentar> {
         message: message,
       );
 
-      _commentController.clear();
-
-      if (mounted) {
-        setState(() {});
-      }
+      await _fetchDiscussions();
     } catch (e) {
       if (mounted) {
         AppDialog.showError(context, e.toString());
@@ -76,11 +112,11 @@ class _TambahKomentarState extends State<TambahKomentar> {
                       onPressed: () => Navigator.pop(context),
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                     ),
-                    const Expanded(
+                    Expanded(
                       child: Center(
                         child: Text(
                           'Diskusi Kelas',
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -88,7 +124,10 @@ class _TambahKomentarState extends State<TambahKomentar> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 48),
+                    IconButton(
+                      onPressed: _fetchDiscussions,
+                      icon: const Icon(Icons.refresh, color: Colors.white),
+                    ),
                   ],
                 ),
               ),
@@ -97,49 +136,41 @@ class _TambahKomentarState extends State<TambahKomentar> {
 
           // Discussion Area
           Expanded(
-            child: FutureBuilder<List<dynamic>>(
-              future: _discussionRepository.getDiscussions(widget.classCode),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMessage != null
+                    ? Center(child: Text(_errorMessage!))
+                    : _messages.isEmpty
+                        ? const Center(
+                            child: Text('Belum ada diskusi di kelas ini.'),
+                          )
+                        : RefreshIndicator(
+                            onRefresh: _fetchDiscussions,
+                            child: ListView.builder(
+                              reverse: true,
+                              padding: const EdgeInsets.all(20),
+                              itemCount: _messages.length,
+                              itemBuilder: (context, index) {
+                                // Backend returns newest-first; with reverse:true
+                                // index 0 lands at the bottom, matching chat UX.
+                                final msgData = _messages[index] as Map<String, dynamic>;
 
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Text(snapshot.error.toString()),
-                  );
-                }
+                                final int senderId = msgData['user_id'] ??
+                                    (msgData['user'] != null ? msgData['user']['id'] : 0);
+                                final bool isMe = _currentUserId != 0 && senderId == _currentUserId;
 
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'Belum ada diskusi di kelas ini.',
-                    ),
-                  );
-                }
+                                final String userRole = msgData['role'] ??
+                                    (msgData['user'] != null ? msgData['user']['role'] : 'student');
+                                final bool isTeacher = userRole == 'teacher' || userRole == 'guru';
 
-                final messages = snapshot.data!;
-
-                return ListView.builder(
-                  reverse: true,
-                  padding: const EdgeInsets.all(20),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final msgData = messages[index] as Map<String, dynamic>;
-                    const bool isTeacher = true;
-                    const bool isMe = false;
-
-                    return _buildCommentItem(
-                      msgData,
-                      isMe,
-                      isTeacher,
-                    );
-                  },
-                );
-              },
-            ),
+                                return _buildCommentItem(
+                                  msgData,
+                                  isMe,
+                                  isTeacher,
+                                );
+                              },
+                            ),
+                          ),
           ),
 
           // Bottom Input Field
