@@ -123,6 +123,7 @@ class _DiskusiKelasScreenState extends State<DiskusiKelasScreen> {
                         ),
                       )
                     : ListView.builder(
+                        reverse: true,
                         padding: const EdgeInsets.all(15),
                         itemCount: _messages.length,
                         itemBuilder: (context, index) {
