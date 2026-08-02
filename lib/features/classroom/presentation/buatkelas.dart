@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BuatKelas extends StatefulWidget {
@@ -170,26 +171,17 @@ class _BuatKelasState extends State<BuatKelas> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Profile Picture
+                            // QR Code Kelas (scan langsung dari app siswa)
                             Container(
-                              width: 100,
-                              height: 100,
+                              padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.grey.shade300,
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: ClipOval(
-                                child: Image.asset(
-                                  'assets/gambar kode kls.png',
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: Color(0xFF1A237E),
-                                    );
-                                  },
-                                ),
+                              child: QrImageView(
+                                data: widget.classCode,
+                                size: 120,
+                                backgroundColor: Colors.white,
                               ),
                             ),
                             const SizedBox(height: 12),

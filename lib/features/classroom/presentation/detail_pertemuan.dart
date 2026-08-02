@@ -4,6 +4,7 @@ import 'package:guru/features/materials/presentation/tambah_materi_dinamis.dart'
 import 'package:guru/features/tasks/presentation/tambah_tugas_dinamis.dart';
 import 'package:guru/features/materials/presentation/materi_detail_dinamis.dart';
 import 'package:guru/features/tasks/presentation/tugas_detail_dinamis.dart';
+import 'package:guru/features/classroom/presentation/absensi_pertemuan.dart';
 
 class DetailPertemuan extends StatefulWidget {
   final String classCode;
@@ -259,6 +260,32 @@ class _DetailPertemuanState extends State<DetailPertemuan> {
                                   },
                                   onDelete: () => _deleteTugas(data['id']),
                                 )),
+
+                          const SizedBox(height: 32),
+
+                          // ================= ABSENSI SECTION =================
+                          const Text(
+                            'Absensi Pertemuan :',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A237E),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          _buildAddButton('Isi Absensi', () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AbsensiPertemuan(
+                                  classCode: widget.classCode,
+                                  className: widget.className,
+                                  pertemuanKe: widget.pertemuanKe,
+                                ),
+                              ),
+                            );
+                          }),
                         ],
                       ),
                     ),
