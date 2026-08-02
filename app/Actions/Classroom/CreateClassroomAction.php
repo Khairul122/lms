@@ -4,9 +4,17 @@ namespace App\Actions\Classroom;
 
 use App\Models\ClassRoom;
 use App\Models\User;
+use App\Services\NotificationService;
 
 class CreateClassroomAction
 {
+    protected NotificationService $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     public function execute(User $user, array $data): ClassRoom
     {
         $class = ClassRoom::create([
@@ -19,6 +27,8 @@ class CreateClassroomAction
         ]);
 
         $class->load('teacher');
+
+        $this->notificationService->notifyClassCreated($class);
 
         return $class;
     }

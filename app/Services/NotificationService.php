@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ClassRoom;
 use App\Models\Notification;
+use App\Models\User;
 
 class NotificationService
 {
@@ -104,5 +105,52 @@ class NotificationService
         return Notification::with('receiver')
             ->latest()
             ->paginate($perPage);
+    }
+
+    /**
+     * Kirim notifikasi pembuatan kelas (untuk guru pembuat dan semua siswa)
+     */
+    public function notifyClassCreated(ClassRoom $class): void
+    {
+        $now = now();
+        $notifications = [];
+
+        // Pastikan relasi teacher dimuat
+        if (!$class->relationLoaded('teacher')) {
+            $class->load('teacher');
+        }
+
+        // 1. Notifikasi untuk guru pembuat kelas
+        if ($class->teacher_id) {
+            $notifications[] = [
+                'receiver_id' => $class->teacher_id,
+                'class_id'    => $class->id,
+                'title'       => 'Kelas Berhasil Dibuat',
+                'message'     => "Kelas {$class->class_name} telah berhasil dibuat dengan kode kelas {$class->class_code}.",
+                'type'        => 'kelas',
+                'is_read'     => false,
+                'created_at'  => $now,
+                'updated_at'  => $now,
+            ];
+        }
+
+        // 2. Notifikasi untuk seluruh siswa terdaftar
+        $students = User::where('role', 'siswa')->get();
+        foreach ($students as $student) {
+            $notifications[] = [
+                'receiver_id' => $student->id,
+                'class_id'    => $class->id,
+                'title'       => 'Kelas Baru Tersedia',
+                'message'     => "Kelas {$class->class_name} oleh " . ($class->teacher?->name ?? 'Guru') . " telah ditambahkan. Silakan bergabung menggunakan kode: {$class->class_code}",
+                'type'        => 'kelas',
+                'is_read'     => false,
+                'created_at'  => $now,
+                'updated_at'  => $now,
+            ];
+        }
+
+        if (count($notifications) > 0) {
+            Notification::insert($notifications);
+        }
     }
 }
