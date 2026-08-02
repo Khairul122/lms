@@ -21,7 +21,7 @@ class AttendanceController extends Controller
     {
         if (!$codeOrId) return null;
         $term = trim($codeOrId);
-        return ClassRoom::where('class_code', $term)
+        return ClassRoom::whereRaw('LOWER(class_code) = ?', [strtolower($term)])
             ->orWhere('id', $term)
             ->first();
     }
@@ -31,12 +31,13 @@ class AttendanceController extends Controller
      */
     private function getStudentsInClass(ClassRoom $classRoom)
     {
-        $students = $classRoom->students()->get();
-        if ($students->isEmpty()) {
-            $members = $classRoom->members()->with('user')->get()->pluck('user')->filter();
-            if ($members->isNotEmpty()) {
-                return $members;
-            }
+        $classRoom->load(['students', 'members.user']);
+
+        $students = $classRoom->students;
+        if ($students->isEmpty() && $classRoom->members) {
+            $students = $classRoom->members->map(function ($m) {
+                return $m->user;
+            })->filter()->values();
         }
         return $students;
     }
