@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lms/core/widgets/app_dialog.dart';
+import 'package:lms/features/classroom/presentation/scan_kode_kelas.dart';
 import 'package:lms/services/api_service.dart'; // Pastikan path ApiService sudah benar
 
 class KodeKelasDialog extends StatefulWidget {
@@ -17,6 +18,17 @@ class _KodeKelasDialogState extends State<KodeKelasDialog> {
   void dispose() {
     _codeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleScan() async {
+    final scannedCode = await Navigator.of(context).push<String>(
+      MaterialPageRoute(builder: (_) => const ScanKodeKelas()),
+    );
+
+    if (scannedCode == null || !mounted) return;
+
+    _codeController.text = scannedCode.trim();
+    _handleJoinClass();
   }
 
   Future<void> _handleJoinClass() async {
@@ -91,33 +103,51 @@ class _KodeKelasDialogState extends State<KodeKelasDialog> {
             ),
             const SizedBox(height: 20),
 
-            // Input Field Kode Kelas
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF00A3E9),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              child: TextField(
-                controller: _codeController,
-                textCapitalization: TextCapitalization.characters,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 3,
-                ),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: 'KODE KELAS',
-                  hintStyle: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 16,
-                    letterSpacing: 1,
+            // Input Field Kode Kelas + Tombol Scan QR
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF00A3E9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: TextField(
+                      controller: _codeController,
+                      textCapitalization: TextCapitalization.characters,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 3,
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        hintText: 'KODE KELAS',
+                        hintStyle: TextStyle(
+                          color: Colors.white60,
+                          fontSize: 16,
+                          letterSpacing: 1,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF00A3E9),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
+                    tooltip: 'Scan QR Kelas',
+                    onPressed: _isLoading ? null : _handleScan,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
 
