@@ -202,6 +202,8 @@ class _NotifikasiState extends State<Notifikasi> {
         return Icons.assignment;
       case 'material':
         return Icons.book;
+      case 'kelas':
+        return Icons.school;
       default:
         return Icons.assignment_turned_in;
     }
