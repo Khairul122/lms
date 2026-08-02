@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\SubmissionController;
 use App\Http\Controllers\Api\DiscussionController;
 use App\Http\Controllers\Api\NotificationController;
+use App\Http\Controllers\Api\AttendanceController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,6 +52,10 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/meetings', [MeetingController::class, 'store']);
     Route::put('/meetings/{meeting}', [MeetingController::class, 'update']);
     Route::delete('/meetings/{meeting}', [MeetingController::class, 'destroy']);
+
+    // Modul Absensi (Attendances)
+    Route::get('/attendances', [AttendanceController::class, 'index']);
+    Route::post('/attendances', [AttendanceController::class, 'store']);
 
     // Modul Materi (Materials)
     Route::get('/materials', [MaterialController::class, 'index']);

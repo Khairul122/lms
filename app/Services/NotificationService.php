@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ClassRoom;
 use App\Models\Notification;
+use App\Models\User;
 
 class NotificationService
 {
@@ -50,6 +51,33 @@ class NotificationService
             'created_at'  => $now,
             'updated_at'  => $now,
         ])->values()->all();
+
+        Notification::insert($rows);
+    }
+
+    /**
+     * Broadcast notifikasi ke semua user berrole siswa (mis. saat kelas baru dibuat,
+     * belum tentu ada siswa yang jadi anggota kelasnya karena join pakai kode).
+     */
+    public function notifyAllStudents(string $title, string $message, string $type, ?int $classId = null): void
+    {
+        $studentIds = User::where('role', 'siswa')->pluck('id');
+
+        if ($studentIds->isEmpty()) {
+            return;
+        }
+
+        $now = now();
+        $rows = $studentIds->map(fn ($id) => [
+            'receiver_id' => $id,
+            'class_id'    => $classId,
+            'title'       => $title,
+            'message'     => $message,
+            'type'        => $type,
+            'is_read'     => false,
+            'created_at'  => $now,
+            'updated_at'  => $now,
+        ])->all();
 
         Notification::insert($rows);
     }
