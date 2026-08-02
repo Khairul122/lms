@@ -4,6 +4,7 @@ import 'package:lms/core/services/notification_watcher.dart';
 import 'package:lms/features/classroom/presentation/daftar_pertemuan.dart';
 import 'package:lms/features/discussions/presentation/diskusi_kelas.dart';
 import 'package:lms/features/tasks/presentation/daftar_tugas.dart';
+import 'package:lms/core/widgets/app_dialog.dart';
 
 class NotifikasiScreen extends StatefulWidget {
   const NotifikasiScreen({super.key});
@@ -90,18 +91,68 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
         );
         break;
       case 'discussion':
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => DiskusiKelasScreen(classCode: classCode, className: className),
-          ),
-        );
-        break;
-      default:
-        // Tipe lain (mis. pengumuman umum) tidak punya tujuan spesifik, cukup ditandai dibaca.
-        break;
-    }
-  }
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => DiskusiKelasScreen(classCode: classCode, className: className),
+                                          ),
+                                        );
+                                        break;
+                                      case 'kelas':
+                                        _showJoinClassConfirmation(context, classCode, className);
+                                        break;
+                                      default:
+                                        // Tipe lain (mis. pengumuman umum) tidak punya tujuan spesifik, cukup ditandai dibaca.
+                                        break;
+                                    }
+                                  }
+
+                                  Future<void> _showJoinClassConfirmation(BuildContext context, String classCode, String className) async {
+                                    final confirm = await AppDialog.showConfirm(
+                                      context,
+                                      title: 'Gabung Kelas',
+                                      message: 'Apakah Anda ingin bergabung ke kelas "$className"?',
+                                      confirmText: 'Ya, Gabung',
+                                      cancelText: 'Batal',
+                                      confirmColor: const Color(0xFF38B0FE),
+                                    );
+
+                                    if (confirm == true) {
+                                      if (!context.mounted) return;
+                                      showDialog(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder: (ctx) => const Center(child: CircularProgressIndicator()),
+                                      );
+
+                                      try {
+                                        final response = await ApiService.post('/classes/join', {
+                                          'class_code': classCode,
+                                        });
+
+                                        if (context.mounted) Navigator.pop(context); // Tutup loading
+
+                                        if (response is Map && (response['success'] == true || response['status'] == 'success')) {
+                                          final String msg = response['message'] ?? 'Berhasil bergabung ke kelas!';
+                                          if (context.mounted) {
+                                            await AppDialog.showSuccess(context, msg);
+                                          }
+                                        } else {
+                                          final String errorMsg = (response is Map && response.containsKey('message'))
+                                              ? response['message']
+                                              : 'Gagal bergabung ke kelas';
+                                          if (context.mounted) {
+                                            AppDialog.showError(context, errorMsg);
+                                          }
+                                        }
+                                      } catch (e) {
+                                        if (context.mounted) Navigator.pop(context); // Tutup loading
+                                        if (context.mounted) {
+                                          AppDialog.showError(context, 'Terjadi kesalahan: ${e.toString().replaceAll('Exception: ', '')}');
+                                        }
+                                      }
+                                    }
+                                  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,9 +176,9 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
                 bottomRight: Radius.circular(30),
               ),
             ),
-            child: SafeArea(
+            child: const SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -234,6 +285,10 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
                                   case 'submission':
                                     icon = Icons.upload_file;
                                     iconColor = Colors.teal;
+                                    break;
+                                  case 'kelas':
+                                    icon = Icons.school;
+                                    iconColor = Colors.indigo;
                                     break;
                                   default:
                                     icon = Icons.notifications;
