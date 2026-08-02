@@ -25,16 +25,7 @@ class CreateClassroomAction
 
         $class->load('teacher');
 
-        try {
-            $this->notificationService->notifyAllStudents(
-                title: 'Kelas Baru Dibuat',
-                message: "{$class->class_name} ({$class->subject}) sudah dibuat. Gabung pakai kode: {$class->class_code}",
-                type: 'classroom',
-                classId: $class->id,
-            );
-        } catch (\Exception $e) {
-            // Silence if notification fails
-        }
+        $this->notificationService->notifyClassCreated($class);
 
         return $class;
     }
