@@ -41,23 +41,65 @@ class NotificationController extends Controller
         return $this->success($notification);
     }
 
-    public function store(Request $request, CreateNotificationAction $action)
+    public function store(Request $request)
     {
         $request->validate([
-            'receiver_id' => 'required|exists:users,id',
+            'receiver_id' => 'nullable|exists:users,id',
             'class_id'    => 'nullable|exists:class_rooms,id',
             'title'       => 'required|string|max:255',
             'message'     => 'required|string',
             'type'        => 'required|string',
         ]);
 
-        $notification = $action->execute($request->all());
+        $user = $request->user();
 
-        return $this->created($notification, 'Notifikasi berhasil dibuat.');
+        if ($request->filled('receiver_id')) {
+            $this->notificationService->notifyUser(
+                userId: $request->receiver_id,
+                title: $request->title,
+                message: $request->message,
+                type: $request->type,
+                classId: $request->class_id
+            );
+        } elseif ($request->filled('class_id')) {
+            $this->notificationService->notifyClass(
+                classId: $request->class_id,
+                title: $request->title,
+                message: $request->message,
+                type: $request->type,
+                excludeUserId: $user->id
+            );
+        } else {
+            // Broadcast ke seluruh siswa
+            $students = \App\Models\User::where('role', 'siswa')->get();
+            $now = now();
+            $rows = [];
+            foreach ($students as $student) {
+                $rows[] = [
+                    'receiver_id' => $student->id,
+                    'class_id'    => null,
+                    'title'       => $request->title,
+                    'message'     => $request->message,
+                    'type'        => $request->type,
+                    'is_read'     => false,
+                    'created_at'  => $now,
+                    'updated_at'  => $now,
+                ];
+            }
+            if (count($rows) > 0) {
+                Notification::insert($rows);
+            }
+        }
+
+        return $this->success(null, 'Notifikasi berhasil dibuat.', 201);
     }
 
     public function update(Notification $notification, MarkNotificationReadAction $action)
     {
+        if ($notification->receiver_id !== auth()->id()) {
+            return $this->forbidden('Anda tidak memiliki akses ke notifikasi ini.');
+        }
+
         $notification = $action->execute($notification);
 
         return $this->success($notification, 'Notifikasi ditandai sudah dibaca.');
@@ -65,6 +107,10 @@ class NotificationController extends Controller
 
     public function destroy(Notification $notification, DeleteNotificationAction $action)
     {
+        if ($notification->receiver_id !== auth()->id()) {
+            return $this->forbidden('Anda tidak memiliki akses untuk menghapus notifikasi ini.');
+        }
+
         $action->execute($notification);
 
         return $this->success(null, 'Notifikasi berhasil dihapus.');
